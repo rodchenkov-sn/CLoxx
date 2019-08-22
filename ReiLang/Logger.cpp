@@ -41,13 +41,25 @@ void Logger::log(LogLevel level, const std::string& msg)
 {
     if (level == LogLevel::Debug) {
 #ifdef _DEBUG
-        stream_ << std::left << std::setw(7) << to_string(level) << " [ XXXXXXXXXX ] " << msg << "\n";
+        stream_ << std::left << std::setw(7) << to_string(level) << " [            ] " << msg << "\n";
 #endif
     }
     else {
-        stream_ << std::left << std::setw(7) << to_string(level) << " [ XXXXXXXXXX ] " << msg << "\n";
+        stream_ << std::left << std::setw(7) << to_string(level) << " [            ] " << msg << "\n";
     }
     log_count_[int(level)]++;
+}
+
+void Logger::clearStat()
+{
+    for (auto& i : log_count_) {
+        i = 0;
+    }
+}
+
+void Logger::showStat()
+{
+    stream_ << "\n===== Total: warnings: " << log_count_[int(LogLevel::Warning)] << ", errors: " << log_count_[int(LogLevel::Error)] << " =====\n";
 }
 
 unsigned Logger::count(LogLevel level) const

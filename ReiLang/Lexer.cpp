@@ -33,7 +33,10 @@ std::vector<std::shared_ptr<Token>> Lexer::getTokens()
         start_ = current_;
         get_next_token_();
     }
-    tokens_.push_back(std::make_shared<Token>(TokenType::Eof, "eof", 0));
+    tokens_.push_back(std::make_shared<Token>(TokenType::Eof, "eof", 0, line_));
+    if (logger_.count(LogLevel::Error) > 0) {
+        logger_.log(LogLevel::Fatal, "Bad lexing.");
+    }
     return tokens_;
 }
 
@@ -140,19 +143,19 @@ char Lexer::advance_()
 void Lexer::add_token_(TokenType type)
 {
     const std::string text = script_.substr(start_, current_ - start_);
-    tokens_.push_back(std::make_shared<Token>(type, text, 0));
+    tokens_.push_back(std::make_shared<Token>(type, text, 0, line_));
 }
 
 void Lexer::add_token_(double val)
 {
     const std::string text = script_.substr(start_, current_ - start_);
-    tokens_.push_back(std::make_shared<Token>(TokenType::Number, text, val));
+    tokens_.push_back(std::make_shared<Token>(TokenType::Number, text, val, line_));
 }
 
 void Lexer::add_token_(std::string val)
 {
     const std::string text = script_.substr(start_, current_ - start_);
-    tokens_.push_back(std::make_shared<Token>(TokenType::String, text, val));
+    tokens_.push_back(std::make_shared<Token>(TokenType::String, text, val, line_));
 }
 
 void Lexer::make_string_()

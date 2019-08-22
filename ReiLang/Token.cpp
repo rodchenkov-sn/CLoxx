@@ -100,9 +100,10 @@ const char* to_string(TokenType e)
     }
 }
 
-Token::Token(const TokenType t, std::string lex, std::variant<double, std::string> lit):
+Token::Token(const TokenType t, std::string lex, std::variant<double, std::string> lit, unsigned int l) :
     type(t),
     lexeme(std::move(lex)),
-    literal(std::move(lit))
+    literal(std::move(lit)),
+    line(l)
 {
 }

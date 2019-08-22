@@ -2,19 +2,19 @@
 #include <fstream>
 #include <string>
 
-#include "Lexer.hpp"
+#include "Parser.hpp"
 
 void run(const std::string& script)
 {
     Logger logger{ std::cout };
     Lexer lexer = Lexer{ script, logger };
-    std::vector<std::shared_ptr<Token>> tokens = lexer.getTokens();
+    Parser parser{ lexer.getTokens(), logger };
+    std::shared_ptr<Ast::Node> ast = parser.parse();
     if (logger.count(LogLevel::Error) > 0) {
-        logger.log(LogLevel::Fatal, "Parsing terminated due to lexing errors.");
+        logger.log(LogLevel::Fatal, "Bad parsing.");
+        logger.log(LogLevel::Info, "Interpreting terminated due to parsing errors.");
     }
-    for (auto& t : tokens) {
-        std::cout << *t << " ";
-    }
+    logger.showStat();
     std::cout << "\n";
 }
 

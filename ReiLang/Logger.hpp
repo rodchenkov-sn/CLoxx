@@ -18,6 +18,8 @@ public:
     explicit Logger(std::ostream& stream);
     void log(LogLevel level, unsigned int line, const std::string& msg);
     void log(LogLevel level, const std::string& msg);
+    void clearStat();
+    void showStat();
     [[nodiscard]] unsigned int count(LogLevel level) const;
 private:
     std::ostream& stream_;

@@ -52,10 +52,11 @@ const char* to_string(TokenType e);
 
 struct Token
 {
-    Token(TokenType t, std::string lex, std::variant<double, std::string> lit);
+    Token(TokenType t, std::string lex, std::variant<double, std::string> lit, unsigned int l);
 
     TokenType type;
     std::string lexeme;
     std::variant<double, std::string> literal;
+    unsigned int line;
     friend std::ostream& operator << (std::ostream& stream, const Token& token);
 };
