@@ -6,10 +6,14 @@
 
 void run(const std::string& script)
 {
-    Lexer lexer = Lexer{ script };
-    std::list<Token> tokens = lexer.getTokens();
+    Logger logger{ std::cout };
+    Lexer lexer = Lexer{ script, logger };
+    std::vector<std::shared_ptr<Token>> tokens = lexer.getTokens();
+    if (logger.count(LogLevel::Error) > 0) {
+        logger.log(LogLevel::Fatal, "Parsing terminated due to lexing errors.");
+    }
     for (auto& t : tokens) {
-        std::cout << t << " ";
+        std::cout << *t << " ";
     }
     std::cout << "\n";
 }
@@ -57,6 +61,6 @@ int main(int argc, char* argv[])
     } catch (const std::exception& e) {
         std::cout << e.what() << "\n";
         return 1;
-    }
+    } 
     return 0;
 }

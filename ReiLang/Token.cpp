@@ -1,4 +1,5 @@
 #include "Token.hpp"
+#include <utility>
 
 std::ostream& operator<<(std::ostream& stream, const Token& token)
 {
@@ -97,4 +98,11 @@ const char* to_string(TokenType e)
     default :
         return "unknown";
     }
+}
+
+Token::Token(const TokenType t, std::string lex, std::variant<double, std::string> lit):
+    type(t),
+    lexeme(std::move(lex)),
+    literal(std::move(lit))
+{
 }

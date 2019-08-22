@@ -1,7 +1,6 @@
 #include "Lexer.hpp"
-#include "ErrorHandling.hpp"
 
-Lexer::Lexer(std::string script):
+Lexer::Lexer(std::string script, Logger& logger) :
     script_(std::move(script)),
     start_(0),
     current_(0),
@@ -23,17 +22,18 @@ Lexer::Lexer(std::string script):
         { "true"  , TokenType::True   },
         { "var"   , TokenType::Var    },
         { "while" , TokenType::While  }
-    })
+        }),
+    logger_(logger)
 {
 }
 
-std::list<Token> Lexer::getTokens()
+std::vector<std::shared_ptr<Token>> Lexer::getTokens()
 {
     while (!is_end_()) {
         start_ = current_;
         get_next_token_();
     }
-    tokens_.push_back({ TokenType::Eof, "eof", 0 });
+    tokens_.push_back(std::make_shared<Token>(TokenType::Eof, "eof", 0));
     return tokens_;
 }
 
@@ -98,6 +98,8 @@ void Lexer::get_next_token_()
                 advance_();
             }
         } else if (match_('*')) {
+            const unsigned int start = line_;
+            bool terminated = false;
             while (!is_end_()) {
                 if (peek_() == '\n') {
                     ++line_;
@@ -105,9 +107,13 @@ void Lexer::get_next_token_()
                 if (peek_() == '*' && peek_next_() == '/') {
                     advance_();
                     advance_();
+                    terminated = true;
                     break;
                 }
                 advance_();
+            }
+            if (!terminated) {
+                logger_.log(LogLevel::Warning, start, "Unterminated comment.");
             }
         } else {
             add_token_(TokenType::Slash);
@@ -120,10 +126,7 @@ void Lexer::get_next_token_()
         } else if (isalpha(c) || c == '_') {
             make_identifier_();
         } else {
-            std::string msg = "Unexpected lexeme \"";
-            msg += c;
-            msg += "\".";
-            error(line_, msg);
+            logger_.log(LogLevel::Error, line_, "Unexpected lexeme \"" + std::string(1, c) + "\".");
         }
     }
 }
@@ -137,23 +140,24 @@ char Lexer::advance_()
 void Lexer::add_token_(TokenType type)
 {
     const std::string text = script_.substr(start_, current_ - start_);
-    tokens_.push_back({ type, text, 0 });
+    tokens_.push_back(std::make_shared<Token>(type, text, 0));
 }
 
 void Lexer::add_token_(double val)
 {
     const std::string text = script_.substr(start_, current_ - start_);
-    tokens_.push_back({ TokenType::Number, text, val });
+    tokens_.push_back(std::make_shared<Token>(TokenType::Number, text, val));
 }
 
 void Lexer::add_token_(std::string val)
 {
     const std::string text = script_.substr(start_, current_ - start_);
-    tokens_.push_back({ TokenType::String, text, val });
+    tokens_.push_back(std::make_shared<Token>(TokenType::String, text, val));
 }
 
 void Lexer::make_string_()
 {
+    const unsigned int start = line_;
     while (peek_() != '"' && !is_end_()) {
         if (peek_() == '\n') {
             ++line_;
@@ -161,7 +165,7 @@ void Lexer::make_string_()
         advance_();
     }
     if (is_end_()) {
-        error(line_, "Unterminated string.");
+        logger_.log(LogLevel::Error, start, "Unterminated string.");
     }
     advance_();
     add_token_(script_.substr(start_ + 1, current_ - start_ - 2));

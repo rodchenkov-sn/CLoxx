@@ -52,6 +52,8 @@ const char* to_string(TokenType e);
 
 struct Token
 {
+    Token(TokenType t, std::string lex, std::variant<double, std::string> lit);
+
     TokenType type;
     std::string lexeme;
     std::variant<double, std::string> literal;
