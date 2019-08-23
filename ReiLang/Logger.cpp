@@ -27,26 +27,30 @@ Logger::Logger(std::ostream& stream):
 
 void Logger::log(const LogLevel level, unsigned int line, const std::string& msg)
 {
+#ifndef SILENCE
     if (level == LogLevel::Debug) {
-#ifdef _DEBUG
+    #ifdef _DEBUG
         stream_ << std::left << std::setw(7) << to_string(level) << " [ line " << std::right << std::setw(5) << line << " ] " << msg << "\n";
-#endif
+    #endif
     } else {
         stream_ << std::left << std::setw(7) << to_string(level) << " [ line " << std::right << std::setw(5) << line << " ] " << msg << "\n";
     }
+#endif
     log_count_[int(level)]++;
 }
 
 void Logger::log(LogLevel level, const std::string& msg)
 {
+#ifndef SILENCE
     if (level == LogLevel::Debug) {
-#ifdef _DEBUG
+    #ifdef _DEBUG
         stream_ << std::left << std::setw(7) << to_string(level) << " [            ] " << msg << "\n";
-#endif
+    #endif
     }
     else {
         stream_ << std::left << std::setw(7) << to_string(level) << " [            ] " << msg << "\n";
     }
+#endif
     log_count_[int(level)]++;
 }
 

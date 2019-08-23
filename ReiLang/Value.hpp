@@ -46,8 +46,7 @@ public:
     Value operator || (const Value& rhs) const;
     Value operator && (const Value& rhs) const;
 
-    [[nodiscard]] ValueType getType() const;
-
+    [[nodiscard]] ValueType   getType()   const;
     [[nodiscard]] bool        isTrue()    const;
     [[nodiscard]] bool        getBool()   const;
     [[nodiscard]] double      getNumber() const;

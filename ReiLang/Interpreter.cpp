@@ -1,8 +1,8 @@
 #include "Interpreter.hpp"
 #include <iostream>
 
-Interpreter::Interpreter(std::shared_ptr<Expr::Base> ast, Logger& logger):
-    ast_(std::move(ast)),
+Interpreter::Interpreter(std::vector<std::shared_ptr<Stmt::Base>> statements, Logger& logger):
+    statements_(std::move(statements)),
     logger_(logger)
 {
 }
@@ -14,8 +14,9 @@ void Interpreter::interpret()
         return;
     }
     try {
-        const Value res = evaluate_(*ast_);
-        std::cout << ".... " << res.toPrinter() << "\n";
+        for (auto& s : statements_) {
+            execute_(*s);
+        }
     } catch (const RuntimeError& re) {
         logger_.log(LogLevel::Error, re.line(), re.what());
         logger_.log(LogLevel::Fatal, "Bad interpreting.");
@@ -25,45 +26,72 @@ void Interpreter::interpret()
     }
 }
 
+void Interpreter::visitExpression(Stmt::Expression& stmt)
+{
+    (void)evaluate_(*stmt.expr());
+    
+}
+
+void Interpreter::visitPrint(Stmt::Print& stmt)
+{
+    const Value val = evaluate_(*stmt.expr());
+    std::cout << val.toString() << "\n";
+}
+
+void Interpreter::visitVar(Stmt::Var& stmt)
+{
+    Value val{};
+    if (stmt.expr()) {
+        val = evaluate_(*stmt.expr());
+    }
+    environment_.define(stmt.var().lexeme, val);
+}
+
+Value Interpreter::visitAssign(Expr::Assign& expr)
+{
+    const Value value = evaluate_(*expr.value());
+    environment_.assign(expr.name().lexeme, value);
+    return value;
+}
+
 Value Interpreter::visitGrouping(Expr::Grouping& grouping)
 {
-    return evaluate_(*grouping.expression);
+    return evaluate_(*grouping.expression());
 }
 
 Value Interpreter::visitBinary(Expr::Binary& expr)
 {
     try {
-        const Value l = evaluate_(*expr.left);
-        const Value r = evaluate_(*expr.right);
-        switch (expr.oper.type) {
+        const Value l = evaluate_(*expr.left());
+        switch (expr.oper().type) {
         case TokenType::Plus:
-            return l + r;
+            return l + evaluate_(*expr.right());
         case TokenType::Minus:
-            return l - r;
+            return l - evaluate_(*expr.right());
         case TokenType::Star:
-            return l * r;
+            return l * evaluate_(*expr.right());
         case TokenType::Slash:
-            return l / r;
+            return l / evaluate_(*expr.right());
         case TokenType::EqualEqual:
-            return l == r;
+            return l == evaluate_(*expr.right());
         case TokenType::BangEqual:
-            return l != r;
+            return l != evaluate_(*expr.right());
         case TokenType::Less:
-            return l < r;
+            return l < evaluate_(*expr.right());
         case TokenType::LessEqual:
-            return  l <= r;
+            return  l <= evaluate_(*expr.right());
         case TokenType::Greater:
-            return  l > r;
+            return  l > evaluate_(*expr.right());
         case TokenType::GreaterEqual:
-            return l >= r;
+            return l >= evaluate_(*expr.right());
         case TokenType::And:
-            return l && r;
+            return l.isTrue() ? l && evaluate_(*expr.right()) : Value{ false };
         case TokenType::Or:
-            return l || r;
+            return l.isTrue() ? Value{ true } : l && evaluate_(*expr.right());
         default:;
         }
     } catch (const ValueOperationException& voe) {
-        throw RuntimeError{ expr.oper.line, voe.what() };
+        throw RuntimeError{ expr.oper().line, voe.what() };
     }
     // unreachable
     return Value{};
@@ -72,8 +100,8 @@ Value Interpreter::visitBinary(Expr::Binary& expr)
 Value Interpreter::visitUnary(Expr::Unary& expr)
 {
     try {
-        const Value operand = evaluate_(*expr.operand);
-        switch (expr.oper.type) {
+        const Value operand = evaluate_(*expr.operand());
+        switch (expr.oper().type) {
         case TokenType::Minus:
             return -operand;
         case TokenType::Bang:
@@ -81,7 +109,7 @@ Value Interpreter::visitUnary(Expr::Unary& expr)
         default:;
         }
     } catch (const ValueOperationException& voe) {
-        throw RuntimeError{ expr.oper.line, voe.what() };
+        throw RuntimeError{ expr.oper().line, voe.what() };
     }
     // unreachable
     return Value{};
@@ -89,7 +117,16 @@ Value Interpreter::visitUnary(Expr::Unary& expr)
 
 Value Interpreter::visitLiteral(Expr::Literal& expr)
 {
-    return expr.value;
+    return expr.value();
+}
+
+Value Interpreter::visitVariable(Expr::Variable& expr)
+{
+    try {
+        return environment_.lookup(expr.name().lexeme);
+    } catch (const EnvironmentException& ee) {
+        throw RuntimeError{ expr.name().line, ee.what() };
+    }
 }
 
 Interpreter::RuntimeError::RuntimeError(const unsigned line, std::string msg):
@@ -111,4 +148,9 @@ unsigned Interpreter::RuntimeError::line() const
 Value Interpreter::evaluate_(Expr::Base& expr)
 {
     return expr.accept(*this);
+}
+
+void Interpreter::execute_(Stmt::Base& stmt)
+{
+    stmt.accept(*this);
 }

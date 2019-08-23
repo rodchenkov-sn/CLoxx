@@ -1,6 +1,8 @@
 #pragma once
 #include <ostream>
 
+#define SILENCE_
+
 enum class LogLevel
 {
     Debug   = 0,
