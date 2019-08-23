@@ -9,7 +9,7 @@ class Parser
 {
 public:
     Parser(std::vector<std::shared_ptr<Token>> tokens, Logger& logger);
-    std::shared_ptr<Ast::Node> parse();
+    std::shared_ptr<Expr::Base> parse();
 private:
 
     class ParserException : std::exception
@@ -17,13 +17,15 @@ private:
         [[nodiscard]] char const* what() const override { return "Parser exception."; }
     };
 
-    std::shared_ptr<Ast::Node> expression_();
-    std::shared_ptr<Ast::Node> equality_();
-    std::shared_ptr<Ast::Node> comparison_();
-    std::shared_ptr<Ast::Node> addition_();
-    std::shared_ptr<Ast::Node> multiplication_();
-    std::shared_ptr<Ast::Node> unary_();
-    std::shared_ptr<Ast::Node> primary_();
+    std::shared_ptr<Expr::Base> expression_();
+    std::shared_ptr<Expr::Base> logic_or_();
+    std::shared_ptr<Expr::Base> logic_and_();
+    std::shared_ptr<Expr::Base> equality_();
+    std::shared_ptr<Expr::Base> comparison_();
+    std::shared_ptr<Expr::Base> addition_();
+    std::shared_ptr<Expr::Base> multiplication_();
+    std::shared_ptr<Expr::Base> unary_();
+    std::shared_ptr<Expr::Base> primary_();
 
     bool match_(std::initializer_list<TokenType> lst);
     [[nodiscard]] bool  check_(TokenType expected) const;

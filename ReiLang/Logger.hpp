@@ -16,6 +16,13 @@ class Logger
 {
 public:
     explicit Logger(std::ostream& stream);
+
+    Logger(const Logger&)              = delete;
+    Logger(Logger&&)                   = delete;
+    Logger& operator = (const Logger&) = delete;
+    Logger& operator = (Logger&&)      = delete;
+    ~Logger()                          = default;
+
     void log(LogLevel level, unsigned int line, const std::string& msg);
     void log(LogLevel level, const std::string& msg);
     void clearStat();

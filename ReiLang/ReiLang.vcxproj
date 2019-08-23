@@ -139,6 +139,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Ast.cpp" />
+    <ClCompile Include="Interpreter.cpp" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -148,6 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ast.hpp" />
+    <ClInclude Include="Interpreter.hpp" />
     <ClInclude Include="Lexer.hpp" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="Parser.hpp" />

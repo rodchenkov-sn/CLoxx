@@ -1,4 +1,31 @@
 #include "Value.hpp"
+#include <sstream>
+
+const char* to_string(ValueType e)
+{
+    switch (e) {
+    case ValueType::Nil : return "Nil";
+    case ValueType::Bool : return "Bool";
+    case ValueType::Number : return "Number";
+    case ValueType::String : return "String";
+    default : return "unknown";
+    }
+}
+
+ValueOperationException::ValueOperationException(std::string msg):
+    msg_(std::move(msg))
+{
+}
+
+ValueOperationException::ValueOperationException(ValueType src, ValueType dst)
+{
+    msg_ = "Unable to cast \'" + std::string(to_string(src)) + "\' to \'" + std::string(to_string(dst)) + "\'.";
+}
+
+char const* ValueOperationException::what() const
+{
+    return msg_.c_str();
+}
 
 Value::Value():
     type_(ValueType::Nil)
@@ -23,9 +50,135 @@ Value::Value(std::string value):
 {
 }
 
+Value Value::operator-() const
+{
+    if (type_ == ValueType::Number) {
+        return Value{ -1 * std::get<double>(value_) };
+    }
+    throw ValueOperationException{ type_, ValueType::Number };
+}
+
+Value Value::operator!() const
+{
+    return Value{ !isTrue() };
+}
+
+Value Value::operator+(const Value& rhs) const
+{
+    if (type_ == ValueType::Number && rhs.type_ == ValueType::Number) {
+        return Value{ std::get<double>(value_) + std::get<double>(rhs.value_) };
+    }
+    if (type_ == ValueType::String || rhs.type_ == ValueType::String) {
+        return Value{ toString() + rhs.toString() };
+    }
+    throw ValueOperationException{ rhs.type_, type_ };
+}
+
+Value Value::operator-(const Value& rhs) const
+{
+    if (type_ == ValueType::Number && rhs.type_ == ValueType::Number) {
+        return Value{ std::get<double>(value_) - std::get<double>(rhs.value_) };
+    }
+    if (type_ == ValueType::Number) {
+        throw ValueOperationException{ rhs.type_, ValueType::Number };
+    }
+    throw ValueOperationException{ type_, ValueType::Number };
+}
+
+Value Value::operator*(const Value& rhs) const
+{
+    if (type_ == ValueType::Number && rhs.type_ == ValueType::Number) {
+        return Value{ std::get<double>(value_) * std::get<double>(rhs.value_) };
+    }
+    if (type_ == ValueType::Number) {
+        throw ValueOperationException{ rhs.type_, ValueType::Number };
+    }
+    throw ValueOperationException{ type_, ValueType::Number };
+}
+
+Value Value::operator/(const Value& rhs) const
+{
+    if (type_ == ValueType::Number && rhs.type_ == ValueType::Number) {
+        if (rhs.getNumber() == 0) {
+            throw ValueOperationException{ "Zero division." };
+        }
+        return Value{ std::get<double>(value_) / std::get<double>(rhs.value_) };
+    }
+    if (type_ == ValueType::Number) {
+        throw ValueOperationException{ rhs.type_, ValueType::Number };
+    }
+    throw ValueOperationException{ type_, ValueType::Number };
+}
+
+Value Value::operator==(const Value& rhs) const
+{
+    if (type_ != rhs.type_) {
+        return Value{ false };
+    }
+    switch (type_) {
+    case ValueType::Nil: 
+        return Value{ true };
+    case ValueType::Bool:
+        return Value{ std::get<bool>(value_) == std::get<bool>(rhs.value_) };
+    case ValueType::Number:
+        return Value{ std::get<double>(value_) == std::get<double>(rhs.value_) };
+    case ValueType::String:
+        return Value{ std::get<std::string>(value_) == std::get<std::string>(rhs.value_) };
+    default: ;
+    }
+    // unreachable
+    return Value{ false };
+}
+
+Value Value::operator!=(const Value& rhs) const
+{
+    return !(*this == rhs);
+}
+
+Value Value::operator<(const Value& rhs) const
+{
+    if (type_ == ValueType::Number && rhs.type_ == ValueType::Number) {
+        return Value{ std::get<double>(value_) < std::get<double>(rhs.value_) };
+    }
+    if (type_ == ValueType::Number) {
+        throw ValueOperationException{ rhs.type_, ValueType::Number };
+    }
+    throw ValueOperationException{ type_, ValueType::Number };
+}
+
+Value Value::operator<=(const Value& rhs) const
+{
+    return *this < rhs || *this == rhs;
+}
+
+Value Value::operator>(const Value& rhs) const
+{
+    return !(*this <= rhs);
+}
+
+Value Value::operator>=(const Value& rhs) const
+{
+    return !(*this < rhs);
+}
+
+Value Value::operator||(const Value& rhs) const
+{
+    return Value{ isTrue() || rhs.isTrue() };
+}
+
+Value Value::operator&&(const Value& rhs) const
+{
+    return Value{ isTrue() && rhs.isTrue() };
+}
+
 ValueType Value::getType() const
 {
     return type_;
+}
+
+bool Value::isTrue() const
+{
+    return type_ == ValueType::Bool ? getBool() : type_ != ValueType::Nil;
 }
 
 bool Value::getBool() const
@@ -41,4 +194,32 @@ double Value::getNumber() const
 std::string Value::getString() const
 {
     return std::get<std::string>(value_);
+}
+
+std::string Value::toString() const
+{
+    switch (type_) {
+    case ValueType::Nil: 
+        return "nil";
+    case ValueType::Bool: 
+        return isTrue() ? "true" : "false";
+    case ValueType::Number: {
+        std::ostringstream strs;
+        strs << std::get<double>(value_);
+        std::string str = strs.str();
+        return str;
+    }
+    case ValueType::String:
+        return std::get<std::string>(value_);
+    }
+    // unreachable
+    return "";
+}
+
+std::string Value::toPrinter() const
+{
+    if (type_ == ValueType::String) {
+        return "\"" + toString() + "\"";
+    }
+    return toString();
 }
