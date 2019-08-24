@@ -59,6 +59,15 @@ Value Interpreter::visitGrouping(Expr::Grouping& grouping)
     return evaluate_(*grouping.expression());
 }
 
+Value Interpreter::visitTernary(Expr::Ternary& expr)
+{
+    const Value cond = evaluate_(*expr.condition());
+    if (cond.isTrue()) {
+        return evaluate_(*expr.ifTrue());
+    }
+    return evaluate_(*expr.ifFalse());
+}
+
 Value Interpreter::visitBinary(Expr::Binary& expr)
 {
     try {

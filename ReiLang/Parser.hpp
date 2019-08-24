@@ -26,6 +26,7 @@ private:
 
     std::shared_ptr<Expr::Base> expression_();
     std::shared_ptr<Expr::Base> assignment_();
+    std::shared_ptr<Expr::Base> ternary_();
     std::shared_ptr<Expr::Base> logic_or_();
     std::shared_ptr<Expr::Base> logic_and_();
     std::shared_ptr<Expr::Base> equality_();

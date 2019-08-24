@@ -11,6 +11,18 @@ Value Expr::Grouping::accept(Visitor& visitor)
     return visitor.visitGrouping(*this);
 }
 
+Expr::Ternary::Ternary(std::shared_ptr<Base> condition, std::shared_ptr<Base> ifTrue, std::shared_ptr<Base> ifFalse):
+    condition_(std::move(condition)),
+    if_true_(std::move(ifTrue)),
+    if_false_(std::move(ifFalse))
+{
+}
+
+Value Expr::Ternary::accept(Visitor& visitor)
+{
+    return visitor.visitTernary(*this);
+}
+
 Expr::Binary::Binary(std::shared_ptr<Expr::Base> left, Token oper, std::shared_ptr<Expr::Base> right):
     left_(std::move(left)),
     oper_(std::move(oper)),

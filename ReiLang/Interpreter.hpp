@@ -16,6 +16,7 @@ public:
 
     Value visitAssign(Expr::Assign&)     override;
     Value visitGrouping(Expr::Grouping&) override;
+    Value visitTernary(Expr::Ternary&)   override;
     Value visitBinary(Expr::Binary&)     override;
     Value visitUnary(Expr::Unary&)       override;
     Value visitLiteral(Expr::Literal&)   override;

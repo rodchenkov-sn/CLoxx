@@ -5,7 +5,7 @@
 
 enum class AstNodeType
 {
-    Grouping, Binary, Unary, Literal, Variable, Assign,
+    Grouping, Binary, Ternary, Unary, Literal, Variable, Assign,
     Expression, Print, Var
 };
 
@@ -32,6 +32,23 @@ public:
     [[nodiscard]] AstNodeType type() const override { return AstNodeType::Grouping; }
 private:
     std::shared_ptr<Base> expression_;
+};
+
+struct Ternary : Base
+{
+public:
+    Ternary(std::shared_ptr<Base> condition, std::shared_ptr<Base> ifTrue, std::shared_ptr<Base> ifFalse);
+    Value accept(Visitor& visitor) override;
+
+    [[nodiscard]] std::shared_ptr<Base> condition() const { return condition_; }
+    [[nodiscard]] std::shared_ptr<Base> ifTrue()    const { return if_true_;   }
+    [[nodiscard]] std::shared_ptr<Base> ifFalse()   const { return if_false_;  }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Ternary; }
+private:
+    std::shared_ptr<Base> condition_;
+    std::shared_ptr<Base> if_true_;
+    std::shared_ptr<Base> if_false_;
 };
 
 struct Binary : Base
@@ -117,6 +134,7 @@ public:
     Visitor& operator = (Visitor&&)      = delete;
     virtual ~Visitor()                   = default;
     virtual Value visitGrouping(Grouping&) = 0;
+    virtual Value visitTernary (Ternary&)  = 0;
     virtual Value visitBinary  (Binary&)   = 0;
     virtual Value visitUnary   (Unary&)    = 0;
     virtual Value visitLiteral (Literal&)  = 0;

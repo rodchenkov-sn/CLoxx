@@ -76,7 +76,7 @@ std::shared_ptr<Expr::Base> Parser::expression_()
 
 std::shared_ptr<Expr::Base> Parser::assignment_()
 {
-    const auto expr = logic_or_();
+    const auto expr = ternary_();
     if (match_({TokenType::Equal})) {
         const Token equals = previous_();
         auto val = assignment_();
@@ -87,6 +87,18 @@ std::shared_ptr<Expr::Base> Parser::assignment_()
         throw error_(equals, "Invalid assignment target.");
     }
     return expr;
+}
+
+std::shared_ptr<Expr::Base> Parser::ternary_()
+{
+    const auto cond = logic_or_();
+    if (match_({ TokenType::QuestionMark })) {
+        auto ifTrue = ternary_();
+        consume_v_(TokenType::Colon, "expect \':\' after ternary option.");
+        auto ifFalse = ternary_();
+        return std::make_shared<Expr::Ternary>(cond, ifTrue, ifFalse);
+    }
+    return cond;
 }
 
 std::shared_ptr<Expr::Base> Parser::logic_or_()

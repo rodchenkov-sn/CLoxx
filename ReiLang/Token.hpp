@@ -16,6 +16,8 @@ enum class TokenType
     Semicolon,
     Slash,
     Star,
+    QuestionMark,
+    Colon,
 
     Bang,
     BangEqual,

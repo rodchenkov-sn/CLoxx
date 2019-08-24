@@ -95,6 +95,10 @@ const char* to_string(TokenType e)
         return "Var";
     case TokenType::While :
         return "While";
+    case TokenType::QuestionMark: 
+        return "QuestionMark";
+    case TokenType::Colon:
+        return "Colon";
     default :
         return "unknown";
     }
