@@ -33,7 +33,9 @@ enum class TokenType
     Number,
 
     And,
+    Break,
     Class,
+    Continue,
     Else,
     False,
     Fun,

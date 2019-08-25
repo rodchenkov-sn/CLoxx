@@ -1,9 +1,10 @@
 #include "Interpreter.hpp"
 #include <iostream>
 
-Interpreter::Interpreter(std::vector<std::shared_ptr<Stmt::Base>> statements, Logger& logger):
+Interpreter::Interpreter(std::vector<Stmt::Base::Ptr> statements, Logger& logger):
     statements_(std::move(statements)),
-    logger_(logger)
+    logger_(logger),
+    environment_(std::make_shared<Environment>())
 {
 }
 
@@ -17,11 +18,14 @@ void Interpreter::interpret()
         for (auto& s : statements_) {
             execute_(*s);
         }
+    } catch (const LoopControl& lc) {
+        logger_.log(LogLevel::Error, lc.controller().line, "Loop controller outside loop.");
     } catch (const RuntimeError& re) {
         logger_.log(LogLevel::Error, re.line(), re.what());
-        logger_.log(LogLevel::Fatal, "Bad interpreting.");
     } catch (const std::exception& e) {
         logger_.log(LogLevel::Error, e.what());
+    }
+    if (logger_.count(LogLevel::Error) > 0) {
         logger_.log(LogLevel::Fatal, "Bad interpreting.");
     }
 }
@@ -44,13 +48,49 @@ void Interpreter::visitVar(Stmt::Var& stmt)
     if (stmt.expr()) {
         val = evaluate_(*stmt.expr());
     }
-    environment_.define(stmt.var().lexeme, val);
+    environment_->define(stmt.var().lexeme, val);
+}
+
+void Interpreter::visitBlock(Stmt::Block& stmt)
+{
+    const auto local = std::make_shared<Environment>(environment_.get());
+    execute_block_(stmt.statements(), local);
+}
+
+void Interpreter::visitIfStmt(Stmt::IfStmt& stmt)
+{
+    if (evaluate_(*stmt.condition()).isTrue()) {
+        execute_(*stmt.thenBranch());
+    } else if (stmt.elseBranch()) {
+        execute_(*stmt.elseBranch());
+    }
+}
+
+void Interpreter::visitWhile(Stmt::While& stmt)
+{
+    while (evaluate_(*stmt.condition()).isTrue()) {
+        try {
+            execute_(*stmt.body());
+        } catch (const ContinueCnt&) {
+            // continue execution
+        } catch (const BreakCnt&) {
+            return;
+        }
+    }
+}
+
+void Interpreter::visitControl(Stmt::LoopControl& stmt)
+{
+    if (stmt.controller().type == TokenType::Break) {
+        throw BreakCnt{ stmt.controller() };
+    }
+    throw ContinueCnt{ stmt.controller() };
 }
 
 Value Interpreter::visitAssign(Expr::Assign& expr)
 {
     const Value value = evaluate_(*expr.value());
-    environment_.assign(expr.name().lexeme, value);
+    environment_->assign(expr.name().lexeme, value);
     return value;
 }
 
@@ -132,10 +172,20 @@ Value Interpreter::visitLiteral(Expr::Literal& expr)
 Value Interpreter::visitVariable(Expr::Variable& expr)
 {
     try {
-        return environment_.lookup(expr.name().lexeme);
+        return environment_->lookup(expr.name().lexeme);
     } catch (const EnvironmentException& ee) {
         throw RuntimeError{ expr.name().line, ee.what() };
     }
+}
+
+Interpreter::ContinueCnt::ContinueCnt(Token controller):
+    controller_(std::move(controller))
+{
+}
+
+Interpreter::BreakCnt::BreakCnt(Token controller):
+    controller_(std::move(controller))
+{
 }
 
 Interpreter::RuntimeError::RuntimeError(const unsigned line, std::string msg):
@@ -162,4 +212,19 @@ Value Interpreter::evaluate_(Expr::Base& expr)
 void Interpreter::execute_(Stmt::Base& stmt)
 {
     stmt.accept(*this);
+}
+
+void Interpreter::execute_block_(const std::list<Stmt::Base::Ptr>& statements, std::shared_ptr<Environment> local)
+{
+    const auto prev = environment_;
+    try {
+        environment_ = local;
+        for (auto& s : statements) {
+            execute_(*s);
+        }
+        environment_ = prev;
+    } catch (...) {
+        environment_ = prev;
+        throw;
+    }
 }

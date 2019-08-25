@@ -1,5 +1,6 @@
 #include "Value.hpp"
 #include <sstream>
+#include <iomanip>
 
 const char* to_string(ValueType e)
 {
@@ -204,10 +205,12 @@ std::string Value::toString() const
     case ValueType::Bool: 
         return isTrue() ? "true" : "false";
     case ValueType::Number: {
-        std::ostringstream strs;
-        strs << std::get<double>(value_);
-        std::string str = strs.str();
-        return str;
+        std::ostringstream strout;
+        strout << std::fixed << std::setprecision(15) << std::get<double>(value_);
+        std::string str = strout.str();
+        size_t end = str.find_last_not_of('0') + 1;
+        if (str[end - 1] == '.') end -= 1;
+        return str.erase(end);
     }
     case ValueType::String:
         return std::get<std::string>(value_);

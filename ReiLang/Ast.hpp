@@ -2,26 +2,28 @@
 #include <memory>
 #include "Token.hpp"
 #include "Value.hpp"
+#include <list>
 
 enum class AstNodeType
 {
     Grouping, Binary, Ternary, Unary, Literal, Variable, Assign,
-    Expression, Print, Var
+    Expression, Print, Var, Block, IfStmt, While, Controller
 };
 
 namespace Expr {
 
 class Visitor;
 
-struct Base
+class Base
 {
 public:
+    typedef std::shared_ptr<Base> Ptr;
     virtual ~Base() = default;
     virtual Value accept(Visitor& visitor) = 0;
     [[nodiscard]] virtual AstNodeType type() const = 0;
 };
 
-struct Grouping : Base
+class Grouping : public Base
 {
 public:
     explicit Grouping(std::shared_ptr<Base> expression);
@@ -34,7 +36,7 @@ private:
     std::shared_ptr<Base> expression_;
 };
 
-struct Ternary : Base
+class Ternary : public Base
 {
 public:
     Ternary(std::shared_ptr<Base> condition, std::shared_ptr<Base> ifTrue, std::shared_ptr<Base> ifFalse);
@@ -51,10 +53,10 @@ private:
     std::shared_ptr<Base> if_false_;
 };
 
-struct Binary : Base
+class Binary : public Base
 {
 public:
-    Binary(std::shared_ptr<Expr::Base> left, Token oper, std::shared_ptr<Expr::Base> right);
+    Binary(Expr::Base::Ptr left, Token oper, Expr::Base::Ptr right);
     Value accept(Visitor& visitor) override;
 
     [[nodiscard]] std::shared_ptr<Base> left()  const { return left_;  }
@@ -68,10 +70,10 @@ private:
     std::shared_ptr<Base> right_;
 };
 
-struct Unary : Base
+class Unary : public Base
 {
 public:
-    Unary(Token oper, std::shared_ptr<Expr::Base> operand);
+    Unary(Token oper, Expr::Base::Ptr operand);
     Value accept(Visitor& visitor) override;
 
     [[nodiscard]] Token                 oper()    const { return oper_;    }
@@ -83,7 +85,7 @@ private:
     std::shared_ptr<Base> operand_;
 };
 
-struct Literal : Base
+class Literal : public Base
 {
 public:
     explicit Literal(Value value);
@@ -96,7 +98,7 @@ private:
     Value value_;
 };
 
-struct Variable : Base
+class Variable : public Base
 {
 public:
     explicit Variable(Token name);
@@ -109,7 +111,7 @@ private:
     Token name_;
 };
 
-struct Assign : Base
+class Assign : public Base
 {
 public:
     Assign(Token name, std::shared_ptr<Base> value);
@@ -148,53 +150,112 @@ namespace Stmt {
 
 class Visitor;
 
-struct Base
+class Base
 {
 public:
+    typedef std::shared_ptr<Base> Ptr;
     virtual ~Base() = default;
     virtual void accept(Visitor& visitor) = 0;
     [[nodiscard]] virtual AstNodeType type() const = 0;
 };
 
-struct Expression : Base
+class Expression : public Base
 {
 public:
-    explicit Expression(std::shared_ptr<Expr::Base> expr);
+    explicit Expression(Expr::Base::Ptr expr);
     void accept(Visitor& visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Expr::Base> expr() const { return expr_; }
+    [[nodiscard]] Expr::Base::Ptr expr() const { return expr_; }
 
     [[nodiscard]] AstNodeType type() const override { return AstNodeType::Expression; }
 private:
-    std::shared_ptr<Expr::Base> expr_;
+    Expr::Base::Ptr expr_;
 };
 
-struct Print : Base
+class Print : public Base
 {
 public:
-    explicit Print(std::shared_ptr<Expr::Base> expr);
+    explicit Print(Expr::Base::Ptr expr);
     void accept(Visitor& visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Expr::Base> expr() const { return expr_; }
+    [[nodiscard]] Expr::Base::Ptr expr() const { return expr_; }
 
     [[nodiscard]] AstNodeType type() const override { return AstNodeType::Print; }
 private:
-    std::shared_ptr<Expr::Base> expr_;
+    Expr::Base::Ptr expr_;
 };
 
-struct Var : Base
+class Var : public Base
 {
 public:
-    Var(Token var, std::shared_ptr<Expr::Base> expr);
+    Var(Token var, Expr::Base::Ptr expr);
     void accept(Visitor& visitor) override;
 
     [[nodiscard]] Token                       var()  const { return var_;  }
-    [[nodiscard]] std::shared_ptr<Expr::Base> expr() const { return expr_; }
+    [[nodiscard]] Expr::Base::Ptr expr() const { return expr_; }
 
     [[nodiscard]] AstNodeType type() const override { return AstNodeType::Var; }
 private:
     Token var_;
-    std::shared_ptr<Expr::Base> expr_;
+    Expr::Base::Ptr expr_;
+};
+
+class Block : public Base
+{
+public:
+    explicit Block(std::list<Ptr> statements);
+    void accept(Visitor& visitor) override;
+
+    [[nodiscard]] const std::list<Ptr>& statements() const { return statements_; }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Block; }
+private:
+    std::list<Ptr> statements_;
+};
+
+class IfStmt : public Base
+{
+public:
+    IfStmt(Expr::Base::Ptr condition, Stmt::Base::Ptr thenBranch, Stmt::Base::Ptr elseBranch);
+    void accept(Visitor& visitor) override;
+
+    [[nodiscard]] Expr::Base::Ptr condition()  const { return condition_;   }
+    [[nodiscard]] Stmt::Base::Ptr thenBranch() const { return then_branch_; }
+    [[nodiscard]] Stmt::Base::Ptr elseBranch() const { return else_branch_; }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::IfStmt; }
+private:
+    Expr::Base::Ptr condition_;
+    Stmt::Base::Ptr then_branch_;
+    Stmt::Base::Ptr else_branch_;
+};
+
+class While : public Base
+{
+public:
+    While(Expr::Base::Ptr condition, Stmt::Base::Ptr body);
+    void accept(Visitor& visitor) override;
+
+    [[nodiscard]] Expr::Base::Ptr condition() const { return condition_; }
+    [[nodiscard]] Stmt::Base::Ptr body()      const { return body_;      }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::While; }
+private:
+    Expr::Base::Ptr condition_;
+    Stmt::Base::Ptr body_;
+};
+
+class LoopControl : public Base
+{
+public:
+    explicit LoopControl(Token controller);
+    void accept(Visitor& visitor) override;
+
+    [[nodiscard]] Token controller() const { return controller_; }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Controller; }
+private:
+    Token controller_;
 };
 
 class Visitor
@@ -209,6 +270,10 @@ public:
     virtual void visitExpression(Expression&) = 0;
     virtual void visitPrint(Print&)           = 0;
     virtual void visitVar(Var&)               = 0;
+    virtual void visitBlock(Block&)           = 0;
+    virtual void visitIfStmt(IfStmt&)         = 0;
+    virtual void visitWhile(While&)           = 0;
+    virtual void visitControl(LoopControl&)   = 0;
 };
 
 }

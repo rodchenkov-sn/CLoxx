@@ -23,7 +23,7 @@ Value Expr::Ternary::accept(Visitor& visitor)
     return visitor.visitTernary(*this);
 }
 
-Expr::Binary::Binary(std::shared_ptr<Expr::Base> left, Token oper, std::shared_ptr<Expr::Base> right):
+Expr::Binary::Binary(Expr::Base::Ptr left, Token oper, Expr::Base::Ptr right):
     left_(std::move(left)),
     oper_(std::move(oper)),
     right_(std::move(right))
@@ -35,7 +35,7 @@ Value Expr::Binary::accept(Visitor& visitor)
     return visitor.visitBinary(*this);
 }
 
-Expr::Unary::Unary(Token oper, std::shared_ptr<Expr::Base> operand):
+Expr::Unary::Unary(Token oper, Expr::Base::Ptr operand):
     oper_(std::move(oper)),
     operand_(std::move(operand))
 {
@@ -77,7 +77,7 @@ Value Expr::Assign::accept(Visitor& visitor)
     return visitor.visitAssign(*this);
 }
 
-Stmt::Expression::Expression(std::shared_ptr<Expr::Base> expr):
+Stmt::Expression::Expression(Expr::Base::Ptr expr):
     expr_(std::move(expr))
 {
 }
@@ -87,7 +87,7 @@ void Stmt::Expression::accept(Visitor& visitor)
     visitor.visitExpression(*this);
 }
 
-Stmt::Print::Print(std::shared_ptr<Expr::Base> expr):
+Stmt::Print::Print(Expr::Base::Ptr expr):
     expr_(std::move(expr))
 {
 }
@@ -97,7 +97,7 @@ void Stmt::Print::accept(Visitor& visitor)
     visitor.visitPrint(*this);
 }
 
-Stmt::Var::Var(Token var, std::shared_ptr<Expr::Base> expr):
+Stmt::Var::Var(Token var, Expr::Base::Ptr expr):
     var_(std::move(var)),
     expr_(std::move(expr))
 {
@@ -107,3 +107,47 @@ void Stmt::Var::accept(Visitor& visitor)
 {
     visitor.visitVar(*this);
 }
+
+Stmt::Block::Block(std::list<Ptr> statements):
+    statements_(std::move(statements))
+{
+}
+
+void Stmt::Block::accept(Visitor& visitor)
+{
+    visitor.visitBlock(*this);
+}
+
+Stmt::IfStmt::IfStmt(Expr::Base::Ptr condition, Stmt::Base::Ptr thenBranch, Stmt::Base::Ptr elseBranch):
+    condition_(std::move(condition)),
+    then_branch_(std::move(thenBranch)),
+    else_branch_(std::move(elseBranch))
+{
+}
+
+void Stmt::IfStmt::accept(Visitor& visitor)
+{
+    visitor.visitIfStmt(*this);
+}
+
+Stmt::While::While(Expr::Base::Ptr condition, Stmt::Base::Ptr body):
+    condition_(std::move(condition)),
+    body_(std::move(body))
+{
+}
+
+void Stmt::While::accept(Visitor& visitor)
+{
+    visitor.visitWhile(*this);
+}
+
+Stmt::LoopControl::LoopControl(Token controller):
+    controller_(std::move(controller))
+{
+}
+
+void Stmt::LoopControl::accept(Visitor& visitor)
+{
+    visitor.visitControl(*this);
+}
+

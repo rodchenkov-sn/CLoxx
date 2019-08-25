@@ -99,6 +99,10 @@ const char* to_string(TokenType e)
         return "QuestionMark";
     case TokenType::Colon:
         return "Colon";
+    case TokenType::Break: 
+        return "Break";
+    case TokenType::Continue:
+        return "Continue";
     default :
         return "unknown";
     }

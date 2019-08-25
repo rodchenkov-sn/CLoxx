@@ -7,12 +7,16 @@
 class Interpreter final : Expr::Visitor, Stmt::Visitor
 {
 public:
-    Interpreter(std::vector<std::shared_ptr<Stmt::Base>> statements, Logger& logger);
+    Interpreter(std::vector<Stmt::Base::Ptr> statements, Logger& logger);
     void interpret();
 
     void visitExpression(Stmt::Expression&) override;
     void visitPrint(Stmt::Print&)           override;
     void visitVar(Stmt::Var&)               override;
+    void visitBlock(Stmt::Block&)           override;
+    void visitIfStmt(Stmt::IfStmt&)         override;
+    void visitWhile(Stmt::While&)           override;
+    void visitControl(Stmt::LoopControl&)   override;
 
     Value visitAssign(Expr::Assign&)     override;
     Value visitGrouping(Expr::Grouping&) override;
@@ -22,6 +26,32 @@ public:
     Value visitLiteral(Expr::Literal&)   override;
     Value visitVariable(Expr::Variable&) override;
 private:
+
+    class LoopControl
+    {
+    public:
+        virtual ~LoopControl() = default;
+        [[nodiscard]] virtual Token controller() const = 0;
+    };
+
+    class ContinueCnt : public LoopControl
+    {
+    public:
+        explicit ContinueCnt(Token controller);
+        [[nodiscard]] Token controller() const override { return controller_; }
+    private:
+        Token controller_;
+    };
+
+    class BreakCnt : public LoopControl
+    {
+    public:
+        explicit BreakCnt(Token controller);
+        [[nodiscard]] Token controller() const override { return controller_; }
+    private:
+        Token controller_;
+    };
+
     class RuntimeError final : std::exception
     {
     public:
@@ -35,8 +65,9 @@ private:
 
     Value evaluate_(Expr::Base& expr);
     void execute_(Stmt::Base& stmt);
+    void execute_block_(const std::list<Stmt::Base::Ptr>& statements, std::shared_ptr<Environment> local);
 
-    std::vector<std::shared_ptr<Stmt::Base>> statements_;
-    Logger&                                  logger_;
-    Environment                              environment_;
+    std::vector<Stmt::Base::Ptr> statements_;
+    Logger&                      logger_;
+    std::shared_ptr<Environment> environment_;
 };

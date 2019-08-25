@@ -9,7 +9,7 @@ class Parser
 {
 public:
     Parser(std::vector<std::shared_ptr<Token>> tokens, Logger& logger);
-    std::vector<std::shared_ptr<Stmt::Base>> parse();
+    std::vector<Stmt::Base::Ptr> parse();
 private:
 
     class ParserException : std::exception
@@ -17,24 +17,28 @@ private:
         [[nodiscard]] char const* what() const override { return "Parser exception."; }
     };
 
-    std::shared_ptr<Stmt::Base> declaration_();
-    std::shared_ptr<Stmt::Base> var_declaration_();
-    std::shared_ptr<Stmt::Base> statement_();
-    std::shared_ptr<Stmt::Base> expression_stmt_();
-    std::shared_ptr<Stmt::Base> print_stmt_();
+    Stmt::Base::Ptr declaration_();
+    Stmt::Base::Ptr var_declaration_();
+    Stmt::Base::Ptr statement_();
+    Stmt::Base::Ptr expression_stmt_();
+    Stmt::Base::Ptr print_stmt_();
+    Stmt::Base::Ptr if_statement_();
+    Stmt::Base::Ptr while_();
+
+    std::list<Stmt::Base::Ptr> block_();
 
 
-    std::shared_ptr<Expr::Base> expression_();
-    std::shared_ptr<Expr::Base> assignment_();
-    std::shared_ptr<Expr::Base> ternary_();
-    std::shared_ptr<Expr::Base> logic_or_();
-    std::shared_ptr<Expr::Base> logic_and_();
-    std::shared_ptr<Expr::Base> equality_();
-    std::shared_ptr<Expr::Base> comparison_();
-    std::shared_ptr<Expr::Base> addition_();
-    std::shared_ptr<Expr::Base> multiplication_();
-    std::shared_ptr<Expr::Base> unary_();
-    std::shared_ptr<Expr::Base> primary_();
+    Expr::Base::Ptr expression_();
+    Expr::Base::Ptr assignment_();
+    Expr::Base::Ptr ternary_();
+    Expr::Base::Ptr logic_or_();
+    Expr::Base::Ptr logic_and_();
+    Expr::Base::Ptr equality_();
+    Expr::Base::Ptr comparison_();
+    Expr::Base::Ptr addition_();
+    Expr::Base::Ptr multiplication_();
+    Expr::Base::Ptr unary_();
+    Expr::Base::Ptr primary_();
 
     bool match_(std::initializer_list<TokenType> lst);
     [[nodiscard]] bool  check_(TokenType expected) const;

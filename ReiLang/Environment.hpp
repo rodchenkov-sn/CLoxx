@@ -15,11 +15,13 @@ private:
 class Environment
 {
 public:
-    Environment() = default;
+    Environment();
+    explicit Environment(Environment* enclosing);
     void define(const std::string& name, const Value& value);
     void assign(const std::string& name, const Value& value);
     Value lookup(const std::string& name);
 private:
     std::map<std::string, Value> values_;
+    Environment* enclosing_;
 };
 

@@ -7,9 +7,9 @@ Parser::Parser(std::vector<std::shared_ptr<Token>> tokens, Logger& logger):
 {
 }
 
-std::vector<std::shared_ptr<Stmt::Base>> Parser::parse()
+std::vector<Stmt::Base::Ptr> Parser::parse()
 {
-    std::vector<std::shared_ptr<Stmt::Base>> statements;
+    std::vector<Stmt::Base::Ptr> statements;
     if (logger_.count(LogLevel::Fatal) > 0) {
         logger_.log(LogLevel::Info, "Parsing terminated due to fatal errors.");
         return statements;
@@ -23,7 +23,7 @@ std::vector<std::shared_ptr<Stmt::Base>> Parser::parse()
     return statements;
 }
 
-std::shared_ptr<Stmt::Base> Parser::declaration_()
+Stmt::Base::Ptr Parser::declaration_()
 {
     try {
         if (match_({ TokenType::Var })) {
@@ -36,10 +36,10 @@ std::shared_ptr<Stmt::Base> Parser::declaration_()
     }
 }
 
-std::shared_ptr<Stmt::Base> Parser::var_declaration_()
+Stmt::Base::Ptr Parser::var_declaration_()
 {
     const Token name = consume_(TokenType::Identifier, "expect variable name.");
-    std::shared_ptr<Expr::Base> init = nullptr;
+    Expr::Base::Ptr init = nullptr;
     if (match_({ TokenType::Equal })) {
         init = expression_();
     }
@@ -47,34 +47,80 @@ std::shared_ptr<Stmt::Base> Parser::var_declaration_()
     return std::make_shared<Stmt::Var>(name, init);
 }
 
-std::shared_ptr<Stmt::Base> Parser::statement_()
+Stmt::Base::Ptr Parser::statement_()
 {
+    if (match_({ TokenType::Break, TokenType::Continue })) {
+        const Token controller = previous_();
+        consume_v_(TokenType::Semicolon, "expect ';' after loop controller.");
+        return std::make_shared<Stmt::LoopControl>(controller);
+    }
+    if (match_({ TokenType::While })) {
+        return while_();
+    }
+    if (match_({ TokenType::If })) {
+        return if_statement_();
+    }
     if (match_({ TokenType::Print })) {
         return print_stmt_();
+    }
+    if (match_({TokenType::LeftBrace})) {
+        return std::make_shared<Stmt::Block>(block_());
     }
     return expression_stmt_();
 }
 
-std::shared_ptr<Stmt::Base> Parser::expression_stmt_()
+Stmt::Base::Ptr Parser::expression_stmt_()
 {
     auto expr = expression_();
     consume_v_(TokenType::Semicolon, "expect \';\' after expression.");
     return std::make_shared<Stmt::Expression>(expr);
 }
 
-std::shared_ptr<Stmt::Base> Parser::print_stmt_()
+Stmt::Base::Ptr Parser::print_stmt_()
 {
     auto val = expression_();
     consume_v_(TokenType::Semicolon, "expect \';\' after value.");
     return std::make_shared<Stmt::Print>(val);
 }
 
-std::shared_ptr<Expr::Base> Parser::expression_()
+Stmt::Base::Ptr Parser::if_statement_()
+{
+    consume_v_(TokenType::LeftParen, "expect '(' after 'if'.");
+    const auto condition = expression_();
+    consume_v_(TokenType::RightParen, "expect ')' after if condition.");
+    const auto thenBranch = statement_();
+    Stmt::Base::Ptr elseBranch = nullptr;
+    if (match_({ TokenType::Else })) {
+        elseBranch = statement_();
+    }
+    return std::make_shared<Stmt::IfStmt>(condition, thenBranch, elseBranch);
+}
+
+Stmt::Base::Ptr Parser::while_()
+{
+    consume_v_(TokenType::LeftParen, "expect '(' after 'while'.");
+    const auto condition = expression_();
+    consume_v_(TokenType::RightParen, "expect ')' after while condition.");
+    const auto body = statement_();
+    return std::make_shared<Stmt::While>(condition, body);
+}
+
+std::list<Stmt::Base::Ptr> Parser::block_()
+{
+    std::list<Stmt::Base::Ptr> statements;
+    while (!check_(TokenType::RightBrace) && !is_end_()) {
+        statements.push_back(declaration_());
+    }
+    consume_v_(TokenType::RightBrace, "expect '}' after block.");
+    return statements;
+}
+
+Expr::Base::Ptr Parser::expression_()
 {
     return assignment_();
 }
 
-std::shared_ptr<Expr::Base> Parser::assignment_()
+Expr::Base::Ptr Parser::assignment_()
 {
     const auto expr = ternary_();
     if (match_({TokenType::Equal})) {
@@ -89,7 +135,7 @@ std::shared_ptr<Expr::Base> Parser::assignment_()
     return expr;
 }
 
-std::shared_ptr<Expr::Base> Parser::ternary_()
+Expr::Base::Ptr Parser::ternary_()
 {
     const auto cond = logic_or_();
     if (match_({ TokenType::QuestionMark })) {
@@ -101,7 +147,7 @@ std::shared_ptr<Expr::Base> Parser::ternary_()
     return cond;
 }
 
-std::shared_ptr<Expr::Base> Parser::logic_or_()
+Expr::Base::Ptr Parser::logic_or_()
 {
     auto expr = logic_and_();
     while (match_({ TokenType::Or })) {
@@ -112,7 +158,7 @@ std::shared_ptr<Expr::Base> Parser::logic_or_()
     return expr;
 }
 
-std::shared_ptr<Expr::Base> Parser::logic_and_()
+Expr::Base::Ptr Parser::logic_and_()
 {
     auto expr = equality_();
     while (match_({ TokenType::And })) {
@@ -123,7 +169,7 @@ std::shared_ptr<Expr::Base> Parser::logic_and_()
     return expr;
 }
 
-std::shared_ptr<Expr::Base> Parser::equality_()
+Expr::Base::Ptr Parser::equality_()
 {
     auto expr = comparison_();
     while (match_({TokenType::EqualEqual, TokenType::BangEqual})) {
@@ -134,7 +180,7 @@ std::shared_ptr<Expr::Base> Parser::equality_()
     return expr;
 }
 
-std::shared_ptr<Expr::Base> Parser::comparison_()
+Expr::Base::Ptr Parser::comparison_()
 {
     auto expr = addition_();
     while (match_({ TokenType::Greater, TokenType::GreaterEqual, TokenType::Less, TokenType::LessEqual })) {
@@ -145,7 +191,7 @@ std::shared_ptr<Expr::Base> Parser::comparison_()
     return expr;
 }
 
-std::shared_ptr<Expr::Base> Parser::addition_()
+Expr::Base::Ptr Parser::addition_()
 {
     auto expr = multiplication_();
     while (match_({ TokenType::Plus, TokenType::Minus })) {
@@ -156,7 +202,7 @@ std::shared_ptr<Expr::Base> Parser::addition_()
     return expr;
 }
 
-std::shared_ptr<Expr::Base> Parser::multiplication_()
+Expr::Base::Ptr Parser::multiplication_()
 {
     auto expr = unary_();
     while (match_({ TokenType::Star, TokenType::Slash })) {
@@ -167,7 +213,7 @@ std::shared_ptr<Expr::Base> Parser::multiplication_()
     return expr;
 }
 
-std::shared_ptr<Expr::Base> Parser::unary_()
+Expr::Base::Ptr Parser::unary_()
 {
     if (match_({ TokenType::Minus, TokenType::Bang })) {
         Token oper = previous_();
@@ -177,7 +223,7 @@ std::shared_ptr<Expr::Base> Parser::unary_()
     return primary_();
 }
 
-std::shared_ptr<Expr::Base> Parser::primary_()
+Expr::Base::Ptr Parser::primary_()
 {
     if (match_({ TokenType::False })) {
         return std::make_shared<Expr::Literal>(Value{ false });
