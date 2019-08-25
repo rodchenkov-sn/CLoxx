@@ -87,6 +87,23 @@ void Interpreter::visitControl(Stmt::LoopControl& stmt)
     throw ContinueCnt{ stmt.controller() };
 }
 
+void Interpreter::visitForLoop(Stmt::ForLoop& stmt)
+{
+    if (stmt.initializer()) {
+        execute_(*stmt.initializer());
+    }
+    while (evaluate_(*stmt.condition()).isTrue()) {
+        try {
+            execute_(*stmt.body());
+            execute_(*stmt.increment());
+        } catch (const ContinueCnt&) {
+            execute_(*stmt.increment());
+        } catch (const BreakCnt&) {
+            return;
+        }
+    }
+}
+
 Value Interpreter::visitAssign(Expr::Assign& expr)
 {
     const Value value = evaluate_(*expr.value());

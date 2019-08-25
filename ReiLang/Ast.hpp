@@ -7,7 +7,7 @@
 enum class AstNodeType
 {
     Grouping, Binary, Ternary, Unary, Literal, Variable, Assign,
-    Expression, Print, Var, Block, IfStmt, While, Controller
+    Expression, Print, Var, Block, IfStmt, While, Controller, ForLoop
 };
 
 namespace Expr {
@@ -258,6 +258,30 @@ private:
     Token controller_;
 };
 
+//
+// Design note:
+// I know, I don't have to define separate ast node for 'For loop' cause it can be represented as a "while",
+// But then "continue" and "break" operators will be broken.
+//
+class ForLoop : public Base
+{
+public:
+    ForLoop(Stmt::Base::Ptr initializer, Expr::Base::Ptr condition, Stmt::Base::Ptr increment, Stmt::Base::Ptr body);
+    void accept(Visitor& visitor) override;
+
+    [[nodiscard]] Stmt::Base::Ptr initializer() const { return initializer_; }
+    [[nodiscard]] Expr::Base::Ptr condition()   const { return condition_;   }
+    [[nodiscard]] Stmt::Base::Ptr increment()   const { return increment_;   }
+    [[nodiscard]] Stmt::Base::Ptr body()        const { return body_;        }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::ForLoop; }
+private:
+    Stmt::Base::Ptr initializer_;
+    Expr::Base::Ptr condition_;
+    Stmt::Base::Ptr increment_;
+    Stmt::Base::Ptr body_;
+};
+
 class Visitor
 {
 public:
@@ -274,6 +298,7 @@ public:
     virtual void visitIfStmt(IfStmt&)         = 0;
     virtual void visitWhile(While&)           = 0;
     virtual void visitControl(LoopControl&)   = 0;
+    virtual void visitForLoop(ForLoop&)       = 0;
 };
 
 }

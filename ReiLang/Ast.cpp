@@ -151,3 +151,17 @@ void Stmt::LoopControl::accept(Visitor& visitor)
     visitor.visitControl(*this);
 }
 
+Stmt::ForLoop::ForLoop(Stmt::Base::Ptr initializer, Expr::Base::Ptr condition, Stmt::Base::Ptr increment,
+    Stmt::Base::Ptr body):
+    initializer_(std::move(initializer)),
+    condition_(std::move(condition)),
+    increment_(std::move(increment)),
+    body_(std::move(body))
+{
+}
+
+void Stmt::ForLoop::accept(Visitor& visitor)
+{
+    visitor.visitForLoop(*this);
+}
+

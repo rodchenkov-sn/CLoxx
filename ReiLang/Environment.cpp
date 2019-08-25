@@ -1,5 +1,10 @@
 #include "Environment.hpp"
 
+#include "Logger.hpp"
+#include <iostream>
+
+Logger logger{ std::cout };
+
 EnvironmentException::EnvironmentException(const std::string& name)
 {
     msg_ = "Undefined variable \'" + name + "\'.";
@@ -22,18 +27,21 @@ Environment::Environment(Environment* enclosing):
 
 void Environment::define(const std::string& name, const Value& value)
 {
+    logger.log(LogLevel::Debug, "defining var " + name + " with val " + value.toString());
     values_[name] = value;
 }
 
 void Environment::assign(const std::string& name, const Value& value)
 {
+    logger.log(LogLevel::Debug, "Trying to assign var " + name + " with val " + value.toString());
     if (values_.find(name) == values_.end()) {
         if (enclosing_) {
             enclosing_->assign(name, value);
-        } else {
-            throw EnvironmentException{ name };
+            return;
         }
+        throw EnvironmentException{ name };
     }
+    logger.log(LogLevel::Debug, "Assigning var " + name + " with val " + value.toString());
     values_[name] = value;
 }
 

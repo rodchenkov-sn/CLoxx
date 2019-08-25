@@ -23,7 +23,9 @@ private:
     Stmt::Base::Ptr expression_stmt_();
     Stmt::Base::Ptr print_stmt_();
     Stmt::Base::Ptr if_statement_();
-    Stmt::Base::Ptr while_();
+    Stmt::Base::Ptr while_loop_();
+    Stmt::Base::Ptr for_loop_();
+
 
     std::list<Stmt::Base::Ptr> block_();
 

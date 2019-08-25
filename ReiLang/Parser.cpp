@@ -55,7 +55,10 @@ Stmt::Base::Ptr Parser::statement_()
         return std::make_shared<Stmt::LoopControl>(controller);
     }
     if (match_({ TokenType::While })) {
-        return while_();
+        return while_loop_();
+    }
+    if (match_({ TokenType::For })) {
+        return for_loop_();
     }
     if (match_({ TokenType::If })) {
         return if_statement_();
@@ -96,13 +99,43 @@ Stmt::Base::Ptr Parser::if_statement_()
     return std::make_shared<Stmt::IfStmt>(condition, thenBranch, elseBranch);
 }
 
-Stmt::Base::Ptr Parser::while_()
+Stmt::Base::Ptr Parser::while_loop_()
 {
     consume_v_(TokenType::LeftParen, "expect '(' after 'while'.");
     const auto condition = expression_();
     consume_v_(TokenType::RightParen, "expect ')' after while condition.");
     const auto body = statement_();
     return std::make_shared<Stmt::While>(condition, body);
+}
+
+Stmt::Base::Ptr Parser::for_loop_()
+{
+    consume_v_(TokenType::LeftParen, "expect '(' after 'for'.");
+    Stmt::Base::Ptr init;
+    if (match_({ TokenType::Semicolon })) {
+        init = nullptr;
+    } else if (match_({ TokenType::Var })) {
+        init = var_declaration_();
+    } else {
+        init = expression_stmt_();
+    }
+    Expr::Base::Ptr condition = nullptr;
+    if (!match_({ TokenType::Semicolon })) {
+        condition = expression_();
+    }
+    consume_v_(TokenType::Semicolon, "expect ';' after loop condition.");
+    Stmt::Base::Ptr incr = nullptr;
+    if (!match_({ TokenType::RightParen })) {
+        incr = std::make_shared<Stmt::Expression>(expression_());
+    }
+    consume_v_(TokenType::RightParen, "expect ')' after for clauses.");
+    std::shared_ptr<Stmt::Base> body = statement_();
+    if (!condition) {
+        condition = std::make_shared<Expr::Literal>(Value{ true });
+    }
+    return std::make_shared<Stmt::Block>(std::list<Stmt::Base::Ptr>{
+        std::make_shared<Stmt::ForLoop>(init, condition, incr, body)
+    });
 }
 
 std::list<Stmt::Base::Ptr> Parser::block_()

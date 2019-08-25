@@ -17,6 +17,7 @@ public:
     void visitIfStmt(Stmt::IfStmt&)         override;
     void visitWhile(Stmt::While&)           override;
     void visitControl(Stmt::LoopControl&)   override;
+    void visitForLoop(Stmt::ForLoop&)       override;
 
     Value visitAssign(Expr::Assign&)     override;
     Value visitGrouping(Expr::Grouping&) override;
