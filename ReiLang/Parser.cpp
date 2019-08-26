@@ -26,6 +26,9 @@ std::vector<Stmt::Base::Ptr> Parser::parse()
 Stmt::Base::Ptr Parser::declaration_()
 {
     try {
+        if (match_({ TokenType::Fun })) {
+            return function_("function");
+        }
         if (match_({ TokenType::Var })) {
             return var_declaration_();
         }
@@ -34,6 +37,25 @@ Stmt::Base::Ptr Parser::declaration_()
         synchronize_();
         return nullptr;
     }
+}
+
+Stmt::Base::Ptr Parser::function_(const std::string& kind)
+{
+    const Token name = consume_(TokenType::Identifier, "expect " + kind + " name.");
+    consume_v_(TokenType::LeftParen, "expect '(' after " + kind + " name.");
+    std::vector<Token> params;
+    if (!check_(TokenType::RightParen)) {
+        do {
+            if (params.size() > 255) {
+                throw error_(peek_(), "Cannot have more than 255 parameters.");
+            }
+            params.push_back(consume_(TokenType::Identifier, "expect parameter name"));
+        } while (match_({ TokenType::Comma }));
+    }
+    consume_v_(TokenType::RightParen, "expect ')' after parameters.");
+    consume_v_(TokenType::LeftBrace, "expect '{' before " + kind + " body.");
+    auto body = block_();
+    return std::make_shared<Stmt::Function>(name, params, body);
 }
 
 Stmt::Base::Ptr Parser::var_declaration_()
@@ -53,6 +75,9 @@ Stmt::Base::Ptr Parser::statement_()
         const Token controller = previous_();
         consume_v_(TokenType::Semicolon, "expect ';' after loop controller.");
         return std::make_shared<Stmt::LoopControl>(controller);
+    }
+    if (match_({ TokenType::Return })) {
+        return return_();
     }
     if (match_({ TokenType::While })) {
         return while_loop_();
@@ -122,13 +147,13 @@ Stmt::Base::Ptr Parser::for_loop_()
     Expr::Base::Ptr condition = nullptr;
     if (!match_({ TokenType::Semicolon })) {
         condition = expression_();
+        consume_v_(TokenType::Semicolon, "expect ';' after loop condition.");
     }
-    consume_v_(TokenType::Semicolon, "expect ';' after loop condition.");
     Stmt::Base::Ptr incr = nullptr;
     if (!match_({ TokenType::RightParen })) {
         incr = std::make_shared<Stmt::Expression>(expression_());
+        consume_v_(TokenType::RightParen, "expect ')' after for clauses.");
     }
-    consume_v_(TokenType::RightParen, "expect ')' after for clauses.");
     std::shared_ptr<Stmt::Base> body = statement_();
     if (!condition) {
         condition = std::make_shared<Expr::Literal>(Value{ true });
@@ -136,6 +161,17 @@ Stmt::Base::Ptr Parser::for_loop_()
     return std::make_shared<Stmt::Block>(std::list<Stmt::Base::Ptr>{
         std::make_shared<Stmt::ForLoop>(init, condition, incr, body)
     });
+}
+
+Stmt::Base::Ptr Parser::return_()
+{
+    const Token keyword = previous_();
+    Expr::Base::Ptr value = nullptr;
+    if (!check_(TokenType::Semicolon)) {
+        value = expression_();
+    }
+    consume_v_(TokenType::Semicolon, "expect ';' after return value.");
+    return std::make_shared<Stmt::Return>(keyword, value);
 }
 
 std::list<Stmt::Base::Ptr> Parser::block_()
@@ -253,7 +289,20 @@ Expr::Base::Ptr Parser::unary_()
         auto operand = unary_();
         return std::make_shared<Expr::Unary>(oper, operand);
     }
-    return primary_();
+    return call_();
+}
+
+Expr::Base::Ptr Parser::call_()
+{
+    auto expr = primary_();
+    while (true) {
+        if (match_({ TokenType::LeftParen })) {
+            expr = finish_call_(expr);
+        } else {
+            break;
+        }
+    }
+    return expr;
 }
 
 Expr::Base::Ptr Parser::primary_()
@@ -282,6 +331,21 @@ Expr::Base::Ptr Parser::primary_()
         return std::make_shared<Expr::Variable>(previous_());
     }
     throw error_(peek_(), "expect expression.");
+}
+
+Expr::Base::Ptr Parser::finish_call_(const Expr::Base::Ptr& callee)
+{
+    std::vector<Expr::Base::Ptr> args;
+    if (!check_(TokenType::RightParen)) {
+        do {
+            args.push_back(expression_());
+        } while (match_({ TokenType::Comma }));
+    }
+    if (args.size() > 255) {
+        throw error_(peek_(), "cannot have more than 255 arguments.");
+    }
+    Token paren = consume_(TokenType::RightParen, "expect ')' after arguments.");
+    return std::make_shared<Expr::Call>(callee, paren, args);
 }
 
 bool Parser::match_(std::initializer_list<TokenType> lst)

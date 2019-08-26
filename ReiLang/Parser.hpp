@@ -18,6 +18,7 @@ private:
     };
 
     Stmt::Base::Ptr declaration_();
+    Stmt::Base::Ptr function_(const std::string& kind);
     Stmt::Base::Ptr var_declaration_();
     Stmt::Base::Ptr statement_();
     Stmt::Base::Ptr expression_stmt_();
@@ -25,6 +26,7 @@ private:
     Stmt::Base::Ptr if_statement_();
     Stmt::Base::Ptr while_loop_();
     Stmt::Base::Ptr for_loop_();
+    Stmt::Base::Ptr return_();
 
 
     std::list<Stmt::Base::Ptr> block_();
@@ -40,7 +42,10 @@ private:
     Expr::Base::Ptr addition_();
     Expr::Base::Ptr multiplication_();
     Expr::Base::Ptr unary_();
+    Expr::Base::Ptr call_();
     Expr::Base::Ptr primary_();
+
+    Expr::Base::Ptr finish_call_(const Expr::Base::Ptr& callee);
 
     bool match_(std::initializer_list<TokenType> lst);
     [[nodiscard]] bool  check_(TokenType expected) const;

@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
             runFile(argv[1]);
         }
         else {
-            runPrompt();
+            runFile(R"(c:\Users\rodchenkov.sn\Desktop\demo.lox)");
         }
     } catch (const std::exception& e) {
         std::cout << e.what() << "\n";

@@ -1,11 +1,16 @@
 #include "Interpreter.hpp"
+#include "StdLib/stdlib.hpp"
 #include <iostream>
+#include <sstream>
 
 Interpreter::Interpreter(std::vector<Stmt::Base::Ptr> statements, Logger& logger):
     statements_(std::move(statements)),
     logger_(logger),
-    environment_(std::make_shared<Environment>())
+    global_(std::make_shared<Environment>())
 {
+    global_->define("input", Value{ std::make_shared<InputFun>() });
+    global_->define("num", Value{ std::make_shared<NumFun>() });
+    environment_ = global_;
 }
 
 void Interpreter::interpret()
@@ -20,6 +25,8 @@ void Interpreter::interpret()
         }
     } catch (const LoopControl& lc) {
         logger_.log(LogLevel::Error, lc.controller().line, "Loop controller outside loop.");
+    } catch (const ReturnCnt& rc) {
+        logger_.log(LogLevel::Error, rc.keyword().line, "Return statement outside function.");
     } catch (const RuntimeError& re) {
         logger_.log(LogLevel::Error, re.line(), re.what());
     } catch (const std::exception& e) {
@@ -95,20 +102,68 @@ void Interpreter::visitForLoop(Stmt::ForLoop& stmt)
     while (evaluate_(*stmt.condition()).isTrue()) {
         try {
             execute_(*stmt.body());
-            execute_(*stmt.increment());
+            if (stmt.increment()) {
+                execute_(*stmt.increment());
+            }
         } catch (const ContinueCnt&) {
-            execute_(*stmt.increment());
+            if (stmt.increment()) {
+                execute_(*stmt.increment());
+            }
         } catch (const BreakCnt&) {
             return;
         }
     }
 }
 
+void Interpreter::visitFunction(Stmt::Function& stmt)
+{
+    const std::shared_ptr<Callable> fun = std::make_shared<Function>(std::make_shared<Stmt::Function>(stmt));
+    environment_->define(stmt.name().lexeme, Value{ fun });
+}
+
+void Interpreter::visitReturn(Stmt::Return& stmt)
+{
+    Value val{};
+    if (stmt.value()) {
+        val = evaluate_(*stmt.value());
+    }
+    throw ReturnCnt{ stmt.keyword(), val };
+}
+
+Value Interpreter::visitCall(Expr::Call& expr)
+{
+    const Value callee = evaluate_(*expr.callee());
+    std::vector<Value> args;
+    for (auto& a : expr.argument()) {
+        args.push_back(evaluate_(*a));
+    }
+    if (callee.getType() != ValueType::Callable) {
+        throw RuntimeError{ expr.paren().line, "Can only call functions and classes." };
+    }
+    auto fun = callee.getCallable();
+    if (args.size() != fun->arity()) {
+        std::ostringstream strout;
+        strout << "Expected " << fun->arity() << " arguments but got " << args.size() << ".";
+        throw RuntimeError{ expr.paren().line, strout.str() };
+    }
+    try {
+        return fun->call(*this, args);
+    } catch (const LoopControl& le) {
+        throw RuntimeError{ le.controller().line, "Loop controller outside loop." };
+    } catch (const ReturnCnt& rc) {
+        return rc.value();
+    }
+}
+
 Value Interpreter::visitAssign(Expr::Assign& expr)
 {
-    const Value value = evaluate_(*expr.value());
-    environment_->assign(expr.name().lexeme, value);
-    return value;
+    try {
+        const Value value = evaluate_(*expr.value());
+        environment_->assign(expr.name().lexeme, value);
+        return value;
+    } catch (const EnvironmentException& ee) {
+        throw RuntimeError{ expr.name().line, ee.what() };
+    }
 }
 
 Value Interpreter::visitGrouping(Expr::Grouping& grouping)
@@ -202,6 +257,12 @@ Interpreter::ContinueCnt::ContinueCnt(Token controller):
 
 Interpreter::BreakCnt::BreakCnt(Token controller):
     controller_(std::move(controller))
+{
+}
+
+Interpreter::ReturnCnt::ReturnCnt(Token keyword, Value value):
+    keyword_(std::move(keyword)),
+    value_(std::move(value))
 {
 }
 

@@ -3,11 +3,12 @@
 #include "Token.hpp"
 #include "Value.hpp"
 #include <list>
+#include <vector>
 
 enum class AstNodeType
 {
-    Grouping, Binary, Ternary, Unary, Literal, Variable, Assign,
-    Expression, Print, Var, Block, IfStmt, While, Controller, ForLoop
+    Call, Grouping, Binary, Ternary, Unary, Literal, Variable, Assign,
+    Expression, Print, Var, Block, IfStmt, While, Controller, ForLoop, Function, Return
 };
 
 namespace Expr {
@@ -21,6 +22,23 @@ public:
     virtual ~Base() = default;
     virtual Value accept(Visitor& visitor) = 0;
     [[nodiscard]] virtual AstNodeType type() const = 0;
+};
+
+class Call : public Base
+{
+public:
+    Call(Expr::Base::Ptr callee, Token paren, std::vector<Expr::Base::Ptr> arguments);
+    Value accept(Visitor& visitor) override;
+
+    [[nodiscard]] Expr::Base::Ptr         callee()   const { return callee_;    }
+    [[nodiscard]] Token                   paren()    const { return paren_;     }
+    [[nodiscard]] const std::vector<Ptr>& argument() const { return arguments_; }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Call; }
+private:
+    Expr::Base::Ptr              callee_;
+    Token                        paren_;
+    std::vector<Expr::Base::Ptr> arguments_;
 };
 
 class Grouping : public Base
@@ -142,6 +160,7 @@ public:
     virtual Value visitLiteral (Literal&)  = 0;
     virtual Value visitVariable(Variable&) = 0;
     virtual Value visitAssign  (Assign&)   = 0;
+    virtual Value visitCall    (Call&)     = 0;
 };
 
 }
@@ -282,6 +301,38 @@ private:
     Stmt::Base::Ptr body_;
 };
 
+class Function : public Base
+{
+public:
+    Function(Token name, std::vector<Token> params, std::list<Stmt::Base::Ptr> body);
+    void accept(Visitor& visitor) override;
+
+    [[nodiscard]] Token                   name()   const { return name_;   }
+    [[nodiscard]] const std::vector<Token>& params() const { return params_; }
+    [[nodiscard]] const std::list<Ptr>&   body()   const { return body_;   }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Function; }
+private:
+    Token name_;
+    std::vector<Token> params_;
+    std::list<Stmt::Base::Ptr> body_;
+};
+
+class Return : public Base
+{
+public:
+    Return(Token keyword, Expr::Base::Ptr value);
+    void accept(Visitor& visitor) override;
+
+    [[nodiscard]] Token           keyword() const { return keyword_; }
+    [[nodiscard]] Expr::Base::Ptr value()   const { return value_;   }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Return; }
+private:
+    Token keyword_;
+    Expr::Base::Ptr value_;
+};
+
 class Visitor
 {
 public:
@@ -299,6 +350,8 @@ public:
     virtual void visitWhile(While&)           = 0;
     virtual void visitControl(LoopControl&)   = 0;
     virtual void visitForLoop(ForLoop&)       = 0;
+    virtual void visitFunction(Function&)     = 0;
+    virtual void visitReturn(Return&)         = 0;
 };
 
 }

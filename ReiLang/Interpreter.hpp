@@ -2,6 +2,7 @@
 #include "Ast.hpp"
 #include "Logger.hpp"
 #include "Environment.hpp"
+#include "Function.hpp"
 #include <vector>
 
 class Interpreter final : Expr::Visitor, Stmt::Visitor
@@ -18,7 +19,10 @@ public:
     void visitWhile(Stmt::While&)           override;
     void visitControl(Stmt::LoopControl&)   override;
     void visitForLoop(Stmt::ForLoop&)       override;
+    void visitFunction(Stmt::Function&)     override;
+    void visitReturn(Stmt::Return&)         override;
 
+    Value visitCall(Expr::Call&)         override;
     Value visitAssign(Expr::Assign&)     override;
     Value visitGrouping(Expr::Grouping&) override;
     Value visitTernary(Expr::Ternary&)   override;
@@ -27,6 +31,8 @@ public:
     Value visitLiteral(Expr::Literal&)   override;
     Value visitVariable(Expr::Variable&) override;
 private:
+
+    friend class Function;
 
     class LoopControl
     {
@@ -53,6 +59,17 @@ private:
         Token controller_;
     };
 
+    class ReturnCnt
+    {
+    public:
+        ReturnCnt(Token keyword, Value value);
+        [[nodiscard]] Token keyword() const { return keyword_; }
+        [[nodiscard]] Value value()   const { return value_;   }
+    private:
+        Token keyword_;
+        Value value_;
+    };
+
     class RuntimeError final : std::exception
     {
     public:
@@ -71,4 +88,5 @@ private:
     std::vector<Stmt::Base::Ptr> statements_;
     Logger&                      logger_;
     std::shared_ptr<Environment> environment_;
+    std::shared_ptr<Environment> global_;
 };

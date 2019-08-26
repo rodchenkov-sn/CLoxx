@@ -2,13 +2,16 @@
 #include <sstream>
 #include <iomanip>
 
+#include "Callable.hpp"
+
 const char* to_string(ValueType e)
 {
     switch (e) {
-    case ValueType::Nil : return "Nil";
-    case ValueType::Bool : return "Bool";
-    case ValueType::Number : return "Number";
-    case ValueType::String : return "String";
+    case ValueType::Nil      : return "Nil";
+    case ValueType::Bool     : return "Bool";
+    case ValueType::Number   : return "Number";
+    case ValueType::String   : return "String";
+    case ValueType::Callable : return "Callable";
     default : return "unknown";
     }
 }
@@ -47,6 +50,12 @@ Value::Value(const double value):
 
 Value::Value(std::string value):
     type_(ValueType::String),
+    value_(std::move(value))
+{
+}
+
+Value::Value(std::shared_ptr<Callable> value):
+    type_(ValueType::Callable),
     value_(std::move(value))
 {
 }
@@ -192,6 +201,11 @@ double Value::getNumber() const
     return std::get<double>(value_);
 }
 
+std::shared_ptr<Callable> Value::getCallable() const
+{
+    return std::get<std::shared_ptr<Callable>>(value_);
+}
+
 std::string Value::getString() const
 {
     return std::get<std::string>(value_);
@@ -214,6 +228,8 @@ std::string Value::toString() const
     }
     case ValueType::String:
         return std::get<std::string>(value_);
+    case ValueType::Callable:
+        return (std::get<std::shared_ptr<Callable>>(value_))->toString();
     }
     // unreachable
     return "";

@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="STL">
+      <UniqueIdentifier>{8b846d74-e242-4d4b-9397-c271ea42f785}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -42,6 +45,15 @@
     <ClCompile Include="Environment.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="StdLib\InputFun.cpp">
+      <Filter>STL</Filter>
+    </ClCompile>
+    <ClCompile Include="Function.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="StdLib\NumFun.cpp">
+      <Filter>STL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer.hpp">
@@ -67,6 +79,21 @@
     </ClInclude>
     <ClInclude Include="Environment.hpp">
       <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="Callable.hpp">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="StdLib\stdlib.hpp">
+      <Filter>STL</Filter>
+    </ClInclude>
+    <ClInclude Include="StdLib\InputFun.hpp">
+      <Filter>STL</Filter>
+    </ClInclude>
+    <ClInclude Include="Function.hpp">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="StdLib\NumFun.hpp">
+      <Filter>STL</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

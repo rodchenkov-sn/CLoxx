@@ -1,6 +1,18 @@
 #include "Ast.hpp"
 #include <utility>
 
+Expr::Call::Call(Expr::Base::Ptr callee, Token paren, std::vector<Expr::Base::Ptr> arguments):
+    callee_(std::move(callee)),
+    paren_(std::move(paren)),
+    arguments_(std::move(arguments))
+{
+}
+
+Value Expr::Call::accept(Visitor& visitor)
+{
+    return visitor.visitCall(*this);
+}
+
 Expr::Grouping::Grouping(std::shared_ptr<Base> expression) :
     expression_(std::move(expression))
 {
@@ -165,3 +177,25 @@ void Stmt::ForLoop::accept(Visitor& visitor)
     visitor.visitForLoop(*this);
 }
 
+Stmt::Function::Function(Token name, std::vector<Token> params, std::list<Stmt::Base::Ptr> body):
+    name_(std::move(name)),
+    params_(std::move(params)),
+    body_(std::move(body))
+{
+}
+
+void Stmt::Function::accept(Visitor& visitor)
+{
+    visitor.visitFunction(*this);
+}
+
+Stmt::Return::Return(Token keyword, Expr::Base::Ptr value):
+    keyword_(std::move(keyword)),
+    value_(std::move(value))
+{
+}
+
+void Stmt::Return::accept(Visitor& visitor)
+{
+    visitor.visitReturn(*this);
+}
