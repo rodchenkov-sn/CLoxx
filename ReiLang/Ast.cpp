@@ -89,6 +89,17 @@ Value Expr::Assign::accept(Visitor& visitor)
     return visitor.visitAssign(*this);
 }
 
+Expr::Lambda::Lambda(std::vector<Token> params, std::list<Stmt::Base::Ptr> body):
+    params_(std::move(params)),
+    body_(std::move(body))
+{
+}
+
+Value Expr::Lambda::accept(Visitor& visitor)
+{
+    return visitor.visitLambda(*this);
+}
+
 Stmt::Expression::Expression(Expr::Base::Ptr expr):
     expr_(std::move(expr))
 {

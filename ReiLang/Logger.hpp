@@ -1,5 +1,6 @@
 #pragma once
 #include <ostream>
+#include <chrono>
 
 #define SILENCE_
 
@@ -27,10 +28,12 @@ public:
 
     void log(LogLevel level, unsigned int line, const std::string& msg);
     void log(LogLevel level, const std::string& msg);
+    void elapse(const std::string& event);
     void clearStat();
     void showStat();
     [[nodiscard]] unsigned int count(LogLevel level) const;
 private:
     std::ostream& stream_;
     unsigned int log_count_[5];
+    std::chrono::time_point<std::chrono::high_resolution_clock> start_;
 };

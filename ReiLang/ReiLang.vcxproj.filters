@@ -54,6 +54,9 @@
     <ClCompile Include="StdLib\NumFun.cpp">
       <Filter>STL</Filter>
     </ClCompile>
+    <ClCompile Include="StdLib\RandFun.cpp">
+      <Filter>STL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer.hpp">
@@ -93,6 +96,9 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="StdLib\NumFun.hpp">
+      <Filter>STL</Filter>
+    </ClInclude>
+    <ClInclude Include="StdLib\RandFun.hpp">
       <Filter>STL</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,5 +1,6 @@
 #include "Logger.hpp"
 #include <iomanip>
+#include <sstream>
 
 const char* to_string(LogLevel e)
 {
@@ -19,9 +20,10 @@ const char* to_string(LogLevel e)
     }
 }
 
-Logger::Logger(std::ostream& stream):
+Logger::Logger(std::ostream& stream) :
     stream_(stream),
-    log_count_{0}
+    log_count_{ 0 },
+    start_(std::chrono::high_resolution_clock::now())
 {
 }
 
@@ -52,6 +54,19 @@ void Logger::log(LogLevel level, const std::string& msg)
     }
 #endif
     log_count_[int(level)]++;
+}
+
+void Logger::elapse(const std::string& event)
+{
+    const auto end = std::chrono::high_resolution_clock::now();
+    const auto start = std::chrono::time_point_cast<std::chrono::milliseconds>(start_).time_since_epoch().count();
+    const auto stop  = std::chrono::time_point_cast<std::chrono::milliseconds>(end).time_since_epoch().count();
+    const auto duration = stop - start;
+    start_ = end;
+    std::ostringstream strout;
+    strout << duration;
+    std::string str = strout.str();
+    log(LogLevel::Info, event + " duration: " + str + " ms.");
 }
 
 void Logger::clearStat()

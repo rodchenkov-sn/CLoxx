@@ -44,6 +44,7 @@ private:
     Expr::Base::Ptr unary_();
     Expr::Base::Ptr call_();
     Expr::Base::Ptr primary_();
+    Expr::Base::Ptr lambda_();
 
     Expr::Base::Ptr finish_call_(const Expr::Base::Ptr& callee);
 

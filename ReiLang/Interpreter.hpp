@@ -30,6 +30,7 @@ public:
     Value visitUnary(Expr::Unary&)       override;
     Value visitLiteral(Expr::Literal&)   override;
     Value visitVariable(Expr::Variable&) override;
+    Value visitLambda(Expr::Lambda&)     override;
 private:
 
     friend class Function;

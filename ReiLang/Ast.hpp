@@ -11,7 +11,7 @@ enum class AstNodeType
     Expression, Print, Var, Block, IfStmt, While, Controller, ForLoop, Function, Return
 };
 
-namespace Expr {
+namespace Expr { // Base class here
 
 class Visitor;
 
@@ -23,6 +23,26 @@ public:
     virtual Value accept(Visitor& visitor) = 0;
     [[nodiscard]] virtual AstNodeType type() const = 0;
 };
+
+}
+
+namespace Stmt { // Base class here
+
+class Visitor;
+
+class Base
+{
+public:
+    typedef std::shared_ptr<Base> Ptr;
+    virtual ~Base() = default;
+    virtual void accept(Visitor& visitor) = 0;
+    [[nodiscard]] virtual AstNodeType type() const = 0;
+};
+
+}
+
+namespace Expr {
+
 
 class Call : public Base
 {
@@ -144,6 +164,21 @@ private:
     std::shared_ptr<Base> value_;
 };
 
+class Lambda : public Base
+{
+public:
+    Lambda(std::vector<Token> params, std::list<Stmt::Base::Ptr> body);
+    Value accept(Visitor& visitor) override;
+
+    [[nodiscard]] const std::vector<Token>&         params() const { return params_; }
+    [[nodiscard]] const std::list<Stmt::Base::Ptr>& body()   const { return body_;   }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Function; }
+private:
+    std::vector<Token> params_;
+    std::list<Stmt::Base::Ptr> body_;
+};
+
 class Visitor
 {
 public:
@@ -161,22 +196,12 @@ public:
     virtual Value visitVariable(Variable&) = 0;
     virtual Value visitAssign  (Assign&)   = 0;
     virtual Value visitCall    (Call&)     = 0;
+    virtual Value visitLambda  (Lambda&)   = 0;
 };
 
 }
 
 namespace Stmt {
-
-class Visitor;
-
-class Base
-{
-public:
-    typedef std::shared_ptr<Base> Ptr;
-    virtual ~Base() = default;
-    virtual void accept(Visitor& visitor) = 0;
-    [[nodiscard]] virtual AstNodeType type() const = 0;
-};
 
 class Expression : public Base
 {

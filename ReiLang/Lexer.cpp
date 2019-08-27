@@ -39,6 +39,7 @@ std::vector<std::shared_ptr<Token>> Lexer::getTokens()
     if (logger_.count(LogLevel::Error) > 0) {
         logger_.log(LogLevel::Fatal, "Bad lexing.");
     }
+    logger_.elapse("Lexing");
     return tokens_;
 }
 

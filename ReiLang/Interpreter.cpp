@@ -9,7 +9,8 @@ Interpreter::Interpreter(std::vector<Stmt::Base::Ptr> statements, Logger& logger
     global_(std::make_shared<Environment>())
 {
     global_->define("input", Value{ std::make_shared<InputFun>() });
-    global_->define("num", Value{ std::make_shared<NumFun>() });
+    global_->define("num"  , Value{ std::make_shared<NumFun>()   });
+    global_->define("rand" , Value{ std::make_shared<RandFun>()  });
     environment_ = global_;
 }
 
@@ -35,6 +36,7 @@ void Interpreter::interpret()
     if (logger_.count(LogLevel::Error) > 0) {
         logger_.log(LogLevel::Fatal, "Bad interpreting.");
     }
+    logger_.elapse("Interpreting");
 }
 
 void Interpreter::visitExpression(Stmt::Expression& stmt)
@@ -117,7 +119,7 @@ void Interpreter::visitForLoop(Stmt::ForLoop& stmt)
 
 void Interpreter::visitFunction(Stmt::Function& stmt)
 {
-    const std::shared_ptr<Callable> fun = std::make_shared<Function>(std::make_shared<Stmt::Function>(stmt));
+    const std::shared_ptr<Callable> fun = std::make_shared<Function>(std::make_shared<Stmt::Function>(stmt)); // Todo: kill it with fire
     environment_->define(stmt.name().lexeme, Value{ fun });
 }
 
@@ -248,6 +250,12 @@ Value Interpreter::visitVariable(Expr::Variable& expr)
     } catch (const EnvironmentException& ee) {
         throw RuntimeError{ expr.name().line, ee.what() };
     }
+}
+
+Value Interpreter::visitLambda(Expr::Lambda& expr)
+{
+    const std::shared_ptr<Callable> fun = std::make_shared<Function>(std::make_shared<Expr::Lambda>(expr)); // Todo: kill it with fire
+    return Value{ fun };
 }
 
 Interpreter::ContinueCnt::ContinueCnt(Token controller):

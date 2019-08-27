@@ -1,7 +1,7 @@
 #pragma once
 #include "../Callable.hpp"
 
-class NumFun : public Callable
+class RandFun : public Callable
 {
 public:
     [[nodiscard]] unsigned arity() const override;

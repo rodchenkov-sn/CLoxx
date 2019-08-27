@@ -20,6 +20,7 @@ std::vector<Stmt::Base::Ptr> Parser::parse()
     if (logger_.count(LogLevel::Error) > 0) {
         logger_.log(LogLevel::Fatal, "Bad parsing.");
     }
+    logger_.elapse("Parsing");
     return statements;
 }
 
@@ -330,7 +331,30 @@ Expr::Base::Ptr Parser::primary_()
     if (match_({ TokenType::Identifier })) {
         return std::make_shared<Expr::Variable>(previous_());
     }
+    if (match_({ TokenType::Fun })) {
+        return lambda_();
+    }
     throw error_(peek_(), "expect expression.");
+}
+
+// now, it's just a function_() copy. I'll do smth with it later
+// ToDo: dry lambda method
+Expr::Base::Ptr Parser::lambda_()
+{
+    consume_v_(TokenType::LeftParen, "expect '(' before lambda params.");
+    std::vector<Token> params;
+    if (!check_(TokenType::RightParen)) {
+        do {
+            if (params.size() > 255) {
+                throw error_(peek_(), "Cannot have more than 255 parameters.");
+            }
+            params.push_back(consume_(TokenType::Identifier, "expect parameter name"));
+        } while (match_({ TokenType::Comma }));
+    }
+    consume_v_(TokenType::RightParen, "expect ')' after parameters.");
+    consume_v_(TokenType::LeftBrace, "expect '{' before lambda body.");
+    auto body = block_();
+    return std::make_shared<Expr::Lambda>(params, body);
 }
 
 Expr::Base::Ptr Parser::finish_call_(const Expr::Base::Ptr& callee)
