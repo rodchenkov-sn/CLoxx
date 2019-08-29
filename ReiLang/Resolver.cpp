@@ -123,12 +123,12 @@ void Resolver::visitControl(Stmt::LoopControl&)
 
 void Resolver::visitForLoop(Stmt::ForLoop& stmt)
 {
-    begin_scope_();
+    //begin_scope_();
     resolve_(stmt.initializer());
     resolve_(stmt.condition());
     resolve_(stmt.increment());
     resolve_(stmt.body());
-    end_scope_();
+    //end_scope_();
 }
 
 void Resolver::visitFunction(Stmt::Function* stmt)
