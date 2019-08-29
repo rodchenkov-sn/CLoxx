@@ -1,17 +1,19 @@
 #include "Function.hpp"
 #include "Interpreter.hpp"
 
-Function::Function(const std::shared_ptr<Stmt::Function>& declaration) :
+Function::Function(Stmt::Function* declaration, std::shared_ptr<Environment> closure) :
     params_(declaration->params()),
     body_(declaration->body()),
-    name_(declaration->name().lexeme)
+    name_(declaration->name().lexeme),
+    closure_(std::move(closure))
 {
 }
 
-Function::Function(const std::shared_ptr<Expr::Lambda>& declaration):
+Function::Function(Expr::Lambda* declaration, std::shared_ptr<Environment> closure):
     params_(declaration->params()),
     body_(declaration->body()),
-    name_("Lambda")
+    name_("Lambda"),
+    closure_(std::move(closure))
 {
 }
 
@@ -22,7 +24,7 @@ unsigned Function::arity() const
 
 Value Function::call(Interpreter& interpreter, std::vector<Value> args)
 {
-    auto environment = std::make_shared<Environment>( interpreter.global_.get() );
+    auto environment = std::make_shared<Environment>( closure_.get() );
     for (size_t i = 0; i < args.size(); i++) {
         auto name = params_[i].lexeme;
         auto val = args[i];

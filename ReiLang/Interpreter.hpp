@@ -19,7 +19,7 @@ public:
     void visitWhile(Stmt::While&)           override;
     void visitControl(Stmt::LoopControl&)   override;
     void visitForLoop(Stmt::ForLoop&)       override;
-    void visitFunction(Stmt::Function&)     override;
+    void visitFunction(Stmt::Function*)     override;
     void visitReturn(Stmt::Return&)         override;
 
     Value visitCall(Expr::Call&)         override;
@@ -30,7 +30,9 @@ public:
     Value visitUnary(Expr::Unary&)       override;
     Value visitLiteral(Expr::Literal&)   override;
     Value visitVariable(Expr::Variable&) override;
-    Value visitLambda(Expr::Lambda&)     override;
+    Value visitLambda(Expr::Lambda*)     override;
+
+    void resolve(Expr::Base* expr, unsigned int distance);
 private:
 
     friend class Function;
@@ -86,8 +88,11 @@ private:
     void execute_(Stmt::Base& stmt);
     void execute_block_(const std::list<Stmt::Base::Ptr>& statements, std::shared_ptr<Environment> local);
 
-    std::vector<Stmt::Base::Ptr> statements_;
-    Logger&                      logger_;
-    std::shared_ptr<Environment> environment_;
-    std::shared_ptr<Environment> global_;
+    Value lookup_var_(Expr::Base* expr, const Token& token);
+
+    std::vector<Stmt::Base::Ptr>        statements_;
+    Logger&                             logger_;
+    std::shared_ptr<Environment>        environment_;
+    std::shared_ptr<Environment>        global_;
+    std::map<Expr::Base*, unsigned int> locals_;
 };

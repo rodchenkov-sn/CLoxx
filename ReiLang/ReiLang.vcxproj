@@ -70,16 +70,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <TargetName>reil</TargetName>
+    <TargetName>rei</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <TargetName>reil</TargetName>
+    <TargetName>rei</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <TargetName>reil</TargetName>
+    <TargetName>rei</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <TargetName>reil</TargetName>
+    <TargetName>rei</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -145,6 +145,7 @@
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Resolver.cpp" />
     <ClCompile Include="StdLib\RandFun.cpp" />
     <ClCompile Include="StdLib\NumFun.cpp" />
     <ClCompile Include="Parser.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="Interpreter.hpp" />
     <ClInclude Include="Lexer.hpp" />
     <ClInclude Include="Logger.hpp" />
+    <ClInclude Include="Resolver.hpp" />
     <ClInclude Include="StdLib\RandFun.hpp" />
     <ClInclude Include="StdLib\NumFun.hpp" />
     <ClInclude Include="Parser.hpp" />

@@ -57,6 +57,9 @@
     <ClCompile Include="StdLib\RandFun.cpp">
       <Filter>STL</Filter>
     </ClCompile>
+    <ClCompile Include="Resolver.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Lexer.hpp">
@@ -100,6 +103,9 @@
     </ClInclude>
     <ClInclude Include="StdLib\RandFun.hpp">
       <Filter>STL</Filter>
+    </ClInclude>
+    <ClInclude Include="Resolver.hpp">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

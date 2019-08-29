@@ -45,7 +45,12 @@ void Environment::assign(const std::string& name, const Value& value)
     values_[name] = value;
 }
 
-Value Environment::lookup(const std::string& name)
+void Environment::assignAt(const std::string& name, const Value& value, const unsigned distance)
+{
+    ancestor_(distance)->values_.at(name) = value;
+}
+
+Value Environment::lookup(const std::string& name) const
 {
     if (values_.find(name) == values_.end()) {
         if (enclosing_) {
@@ -53,5 +58,23 @@ Value Environment::lookup(const std::string& name)
         }
         throw EnvironmentException{ name };
     }
-    return values_[name];
+    return values_.at(name);
+}
+
+Value Environment::lookupAt(const std::string& name, unsigned distance)
+{
+    auto ancestor = ancestor_(distance);
+    if (ancestor->values_.find(name) != ancestor->values_.end()) {
+        return ancestor->values_.at(name);
+    }
+    throw EnvironmentException{ name };
+}
+
+Environment* Environment::ancestor_(const unsigned distance)
+{
+    auto* ancestor = const_cast<Environment*>(this);
+    for (unsigned i = 0; i < distance; i++) {
+        ancestor = ancestor->enclosing_;
+    }
+    return ancestor;
 }

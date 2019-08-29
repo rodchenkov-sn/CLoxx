@@ -196,7 +196,7 @@ public:
     virtual Value visitVariable(Variable&) = 0;
     virtual Value visitAssign  (Assign&)   = 0;
     virtual Value visitCall    (Call&)     = 0;
-    virtual Value visitLambda  (Lambda&)   = 0;
+    virtual Value visitLambda  (Lambda*)   = 0;
 };
 
 }
@@ -375,7 +375,7 @@ public:
     virtual void visitWhile(While&)           = 0;
     virtual void visitControl(LoopControl&)   = 0;
     virtual void visitForLoop(ForLoop&)       = 0;
-    virtual void visitFunction(Function&)     = 0;
+    virtual void visitFunction(Function*)     = 0;
     virtual void visitReturn(Return&)         = 0;
 };
 

@@ -117,10 +117,10 @@ void Interpreter::visitForLoop(Stmt::ForLoop& stmt)
     }
 }
 
-void Interpreter::visitFunction(Stmt::Function& stmt)
+void Interpreter::visitFunction(Stmt::Function* stmt)
 {
-    const std::shared_ptr<Callable> fun = std::make_shared<Function>(std::make_shared<Stmt::Function>(stmt)); // Todo: kill it with fire
-    environment_->define(stmt.name().lexeme, Value{ fun });
+    const std::shared_ptr<Callable> fun = std::make_shared<Function>(stmt, environment_);
+    environment_->define(stmt->name().lexeme, Value{ fun });
 }
 
 void Interpreter::visitReturn(Stmt::Return& stmt)
@@ -161,7 +161,11 @@ Value Interpreter::visitAssign(Expr::Assign& expr)
 {
     try {
         const Value value = evaluate_(*expr.value());
-        environment_->assign(expr.name().lexeme, value);
+        if (locals_.find(&expr) == locals_.end()) {
+            global_->assign(expr.name().lexeme, value);
+        } else {
+            environment_->assignAt(expr.name().lexeme, value, locals_.at(&expr));
+        }
         return value;
     } catch (const EnvironmentException& ee) {
         throw RuntimeError{ expr.name().line, ee.what() };
@@ -246,16 +250,21 @@ Value Interpreter::visitLiteral(Expr::Literal& expr)
 Value Interpreter::visitVariable(Expr::Variable& expr)
 {
     try {
-        return environment_->lookup(expr.name().lexeme);
+        return lookup_var_(&expr, expr.name());
     } catch (const EnvironmentException& ee) {
         throw RuntimeError{ expr.name().line, ee.what() };
     }
 }
 
-Value Interpreter::visitLambda(Expr::Lambda& expr)
+Value Interpreter::visitLambda(Expr::Lambda* expr)
 {
-    const std::shared_ptr<Callable> fun = std::make_shared<Function>(std::make_shared<Expr::Lambda>(expr)); // Todo: kill it with fire
+    const std::shared_ptr<Callable> fun = std::make_shared<Function>(expr, environment_);
     return Value{ fun };
+}
+
+void Interpreter::resolve(Expr::Base* expr, const unsigned distance)
+{
+    locals_[expr] = distance;
 }
 
 Interpreter::ContinueCnt::ContinueCnt(Token controller):
@@ -313,4 +322,12 @@ void Interpreter::execute_block_(const std::list<Stmt::Base::Ptr>& statements, s
         environment_ = prev;
         throw;
     }
+}
+
+Value Interpreter::lookup_var_(Expr::Base* expr, const Token& token)
+{
+    if (locals_.find(expr) == locals_.end()) {
+        return global_->lookup(token.lexeme);
+    }
+    return environment_->lookupAt(token.lexeme, locals_.at(expr));
 }

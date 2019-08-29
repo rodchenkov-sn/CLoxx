@@ -19,8 +19,12 @@ public:
     explicit Environment(Environment* enclosing);
     void define(const std::string& name, const Value& value);
     void assign(const std::string& name, const Value& value);
-    Value lookup(const std::string& name);
+    void assignAt(const std::string& name, const Value& value, unsigned distance);
+    [[nodiscard]] Value lookup(const std::string& name) const;
+    [[nodiscard]] Value lookupAt(const std::string& name, unsigned distance);
 private:
+    [[nodiscard]] Environment* ancestor_(unsigned int distance);
+
     std::map<std::string, Value> values_;
     Environment* enclosing_;
 };

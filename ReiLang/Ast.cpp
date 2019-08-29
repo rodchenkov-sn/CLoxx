@@ -97,7 +97,7 @@ Expr::Lambda::Lambda(std::vector<Token> params, std::list<Stmt::Base::Ptr> body)
 
 Value Expr::Lambda::accept(Visitor& visitor)
 {
-    return visitor.visitLambda(*this);
+    return visitor.visitLambda(this);
 }
 
 Stmt::Expression::Expression(Expr::Base::Ptr expr):
@@ -197,7 +197,7 @@ Stmt::Function::Function(Token name, std::vector<Token> params, std::list<Stmt::
 
 void Stmt::Function::accept(Visitor& visitor)
 {
-    visitor.visitFunction(*this);
+    visitor.visitFunction(this);
 }
 
 Stmt::Return::Return(Token keyword, Expr::Base::Ptr value):
