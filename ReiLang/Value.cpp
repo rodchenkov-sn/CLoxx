@@ -3,6 +3,7 @@
 #include <iomanip>
 
 #include "Callable.hpp"
+#include "Instance.hpp"
 
 const char* to_string(ValueType e)
 {
@@ -12,6 +13,7 @@ const char* to_string(ValueType e)
     case ValueType::Number   : return "Number";
     case ValueType::String   : return "String";
     case ValueType::Callable : return "Callable";
+    case ValueType::Instance : return "Instance";
     default : return "unknown";
     }
 }
@@ -56,6 +58,12 @@ Value::Value(std::string value):
 
 Value::Value(std::shared_ptr<Callable> value):
     type_(ValueType::Callable),
+    value_(std::move(value))
+{
+}
+
+Value::Value(std::shared_ptr<Instance> value):
+    type_(ValueType::Instance),
     value_(std::move(value))
 {
 }
@@ -206,6 +214,11 @@ std::shared_ptr<Callable> Value::getCallable() const
     return std::get<std::shared_ptr<Callable>>(value_);
 }
 
+std::shared_ptr<Instance> Value::getInstance() const
+{
+    return std::get<std::shared_ptr<Instance>>(value_);
+}
+
 std::string Value::getString() const
 {
     return std::get<std::string>(value_);
@@ -229,7 +242,10 @@ std::string Value::toString() const
     case ValueType::String:
         return std::get<std::string>(value_);
     case ValueType::Callable:
-        return (std::get<std::shared_ptr<Callable>>(value_))->toString();
+        return std::get<std::shared_ptr<Callable>>(value_)->toString();
+    case ValueType::Instance:
+        return std::get<std::shared_ptr<Instance>>(value_)->toString();
+    default: ;
     }
     // unreachable
     return "";

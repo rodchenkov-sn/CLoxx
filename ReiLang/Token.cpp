@@ -83,6 +83,8 @@ const char* to_string(TokenType e)
         return "Or";
     case TokenType::Print :
         return "Print";
+    case TokenType::Pure :
+        return "Pure";
     case TokenType::Return :
         return "Return";
     case TokenType::Super :

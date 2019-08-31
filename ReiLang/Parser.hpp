@@ -27,6 +27,7 @@ private:
     Stmt::Base::Ptr while_loop_();
     Stmt::Base::Ptr for_loop_();
     Stmt::Base::Ptr return_();
+    Stmt::Base::Ptr klass_declaration_();
 
 
     std::list<Stmt::Base::Ptr> block_();

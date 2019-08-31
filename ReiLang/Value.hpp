@@ -5,6 +5,7 @@
 #include <memory>
 
 class Callable;
+class Instance;
 
 enum class ValueType
 {
@@ -12,7 +13,8 @@ enum class ValueType
     Bool,
     Number,
     String,
-    Callable
+    Callable,
+    Instance
 };
 
 const char* to_string(ValueType e);
@@ -35,6 +37,7 @@ public:
     explicit Value(double value);
     explicit Value(std::string value);
     explicit Value(std::shared_ptr<Callable> value);
+    explicit Value(std::shared_ptr<Instance> value);
 
     Value operator -  ()                 const;
     Value operator !  ()                 const;
@@ -56,11 +59,18 @@ public:
     [[nodiscard]] bool                      getBool()     const;
     [[nodiscard]] double                    getNumber()   const;
     [[nodiscard]] std::shared_ptr<Callable> getCallable() const;
+    [[nodiscard]] std::shared_ptr<Instance> getInstance() const;
     [[nodiscard]] std::string               getString()   const;
     [[nodiscard]] std::string               toString()    const;
     [[nodiscard]] std::string               toPrinter()   const;
 
 private:
     ValueType type_;
-    std::variant<bool, double, std::string, std::shared_ptr<Callable>> value_;
+    std::variant<
+        bool, 
+        double, 
+        std::string, 
+        std::shared_ptr<Callable>, 
+        std::shared_ptr<Instance>
+    > value_;
 };

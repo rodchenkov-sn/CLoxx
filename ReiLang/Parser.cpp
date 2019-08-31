@@ -27,6 +27,9 @@ std::vector<Stmt::Base::Ptr> Parser::parse()
 Stmt::Base::Ptr Parser::declaration_()
 {
     try {
+        if (match_({ TokenType::Class })) {
+            return klass_declaration_();
+        }
         if (match_({ TokenType::Fun })) {
             return function_("function");
         }
@@ -173,6 +176,18 @@ Stmt::Base::Ptr Parser::return_()
     }
     consume_v_(TokenType::Semicolon, "expect ';' after return value.");
     return std::make_shared<Stmt::Return>(keyword, value);
+}
+
+Stmt::Base::Ptr Parser::klass_declaration_()
+{
+    auto name = consume_(TokenType::Identifier, "expect class name.");
+    consume_v_(TokenType::LeftBrace, "expect '{' before class body.");
+    std::vector<Stmt::Base::Ptr> methods;
+    while (!check_(TokenType::RightBrace) && !is_end_()) {
+        methods.push_back(function_("method"));
+    }
+    consume_v_(TokenType::RightBrace, "expect '}' after class body.");
+    return std::make_shared<Stmt::Klass>(name, methods);
 }
 
 std::list<Stmt::Base::Ptr> Parser::block_()

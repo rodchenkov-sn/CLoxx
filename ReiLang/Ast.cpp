@@ -110,6 +110,17 @@ void Stmt::Expression::accept(Visitor& visitor)
     visitor.visitExpression(*this);
 }
 
+Stmt::Klass::Klass(Token name, std::vector<Stmt::Base::Ptr> methods):
+    name_(std::move(name)),
+    methods_(std::move(methods))
+{
+}
+
+void Stmt::Klass::accept(Visitor& visitor)
+{
+    visitor.visitKlass(*this);
+}
+
 Stmt::Print::Print(Expr::Base::Ptr expr):
     expr_(std::move(expr))
 {

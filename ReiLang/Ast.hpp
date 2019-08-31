@@ -8,7 +8,7 @@
 enum class AstNodeType
 {
     Call, Grouping, Binary, Ternary, Unary, Literal, Variable, Assign,
-    Expression, Print, Var, Block, IfStmt, While, Controller, ForLoop, Function, Return
+    Expression, Print, Var, Block, IfStmt, While, Controller, ForLoop, Function, Return, Klass
 };
 
 namespace Expr { // Base class here
@@ -216,6 +216,21 @@ private:
     Expr::Base::Ptr expr_;
 };
 
+class Klass : public Base
+{
+public:
+    Klass(Token name, std::vector<Stmt::Base::Ptr> methods);
+    void accept(Visitor& visitor) override;
+
+    [[nodiscard]] Token                   name()    const { return name_;    }
+    [[nodiscard]] const std::vector<Ptr>& methods() const { return methods_; }
+
+    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Klass; }
+private:
+    Token                        name_;
+    std::vector<Stmt::Base::Ptr> methods_;
+};
+
 class Print : public Base
 {
 public:
@@ -377,6 +392,7 @@ public:
     virtual void visitForLoop(ForLoop&)       = 0;
     virtual void visitFunction(Function*)     = 0;
     virtual void visitReturn(Return&)         = 0;
+    virtual void visitKlass(Klass&)           = 0;
 };
 
 }

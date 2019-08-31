@@ -24,10 +24,6 @@ void Interpreter::interpret()
         for (auto& s : statements_) {
             execute_(*s);
         }
-    } catch (const LoopControl& lc) {
-        logger_.log(LogLevel::Error, lc.controller().line, "Loop controller outside loop.");
-    } catch (const ReturnCnt& rc) {
-        logger_.log(LogLevel::Error, rc.keyword().line, "Return statement outside function.");
     } catch (const RuntimeError& re) {
         logger_.log(LogLevel::Error, re.line(), re.what());
     } catch (const std::exception& e) {
@@ -132,6 +128,11 @@ void Interpreter::visitReturn(Stmt::Return& stmt)
     throw ReturnCnt{ stmt.keyword(), val };
 }
 
+void Interpreter::visitKlass(Stmt::Klass& stmt)
+{
+    environment_->define(stmt.name().lexeme, Value{ std::make_shared<Klass>(stmt.name().lexeme) });
+}
+
 Value Interpreter::visitCall(Expr::Call& expr)
 {
     const Value callee = evaluate_(*expr.callee());
@@ -150,8 +151,6 @@ Value Interpreter::visitCall(Expr::Call& expr)
     }
     try {
         return fun->call(*this, args);
-    } catch (const LoopControl& le) {
-        throw RuntimeError{ le.controller().line, "Loop controller outside loop." };
     } catch (const ReturnCnt& rc) {
         return rc.value();
     }

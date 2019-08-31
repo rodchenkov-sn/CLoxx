@@ -3,6 +3,7 @@
 #include "Logger.hpp"
 #include "Environment.hpp"
 #include "Function.hpp"
+#include "Klass.hpp"
 #include <vector>
 
 class Interpreter final : Expr::Visitor, Stmt::Visitor
@@ -21,6 +22,7 @@ public:
     void visitForLoop(Stmt::ForLoop&)       override;
     void visitFunction(Stmt::Function*)     override;
     void visitReturn(Stmt::Return&)         override;
+    void visitKlass(Stmt::Klass&)           override;
 
     Value visitCall(Expr::Call&)         override;
     Value visitAssign(Expr::Assign&)     override;

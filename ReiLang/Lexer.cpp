@@ -18,6 +18,7 @@ Lexer::Lexer(std::string script, Logger& logger) :
         { "nil"     , TokenType::Nil      },
         { "or"      , TokenType::Or       },
         { "print"   , TokenType::Print    },
+        { "pure"    , TokenType::Pure     },
         { "return"  , TokenType::Return   },
         { "super"   , TokenType::Super    },
         { "this"    , TokenType::This     },

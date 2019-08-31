@@ -44,6 +44,7 @@ enum class TokenType
     Nil,
     Or,
     Print,
+    Pure,
     Return,
     Super,
     This,
