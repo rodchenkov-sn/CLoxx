@@ -56,13 +56,13 @@ Value::Value(std::string value):
 {
 }
 
-Value::Value(std::shared_ptr<Callable> value):
+Value::Value(std::weak_ptr<Callable> value):
     type_(ValueType::Callable),
     value_(std::move(value))
 {
 }
 
-Value::Value(std::shared_ptr<Instance> value):
+Value::Value(std::weak_ptr<Instance> value):
     type_(ValueType::Instance),
     value_(std::move(value))
 {
@@ -211,12 +211,12 @@ double Value::getNumber() const
 
 std::shared_ptr<Callable> Value::getCallable() const
 {
-    return std::get<std::shared_ptr<Callable>>(value_);
+    return std::get<std::weak_ptr<Callable>>(value_).lock();
 }
 
 std::shared_ptr<Instance> Value::getInstance() const
 {
-    return std::get<std::shared_ptr<Instance>>(value_);
+    return std::get<std::weak_ptr<Instance>>(value_).lock();
 }
 
 std::string Value::getString() const

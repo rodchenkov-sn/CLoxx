@@ -12,10 +12,12 @@ public:
     [[nodiscard]] unsigned arity() const override;
     Value call(Interpreter& interpreter, std::vector<Value> args) override;
     [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] std::shared_ptr<Function> bind(const std::weak_ptr<Instance>& instance) const;
 private:
     std::vector<Token> params_;
     std::list<Stmt::Base::Ptr> body_;
     std::string name_;
     std::shared_ptr<Environment> closure_;
+	Stmt::Function* declaration_;
 };
 

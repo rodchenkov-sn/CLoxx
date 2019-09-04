@@ -14,6 +14,9 @@ public:
     Value visitAssign(Expr::Assign&)     override;
     Value visitCall(Expr::Call&)         override;
     Value visitLambda(Expr::Lambda*)     override;
+	Value visitGet(Expr::Get&)           override;
+	Value visitSet(Expr::Set&)           override;
+	Value visitThis(Expr::ThisKw&)       override;
 
     void visitExpression(Stmt::Expression&) override;
     void visitPrint(Stmt::Print&)           override;
@@ -32,7 +35,7 @@ private:
 
     enum class FunType
     {
-        None, Function, Lambda
+        None, Function, Lambda, Method
     };
 
     void resolve_(const std::vector<Stmt::Base::Ptr>& statements);

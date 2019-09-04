@@ -3,7 +3,6 @@
 #include "Logger.hpp"
 #include "Environment.hpp"
 #include "Function.hpp"
-#include "Klass.hpp"
 #include <vector>
 
 class Interpreter final : Expr::Visitor, Stmt::Visitor
@@ -33,6 +32,9 @@ public:
     Value visitLiteral(Expr::Literal&)   override;
     Value visitVariable(Expr::Variable&) override;
     Value visitLambda(Expr::Lambda*)     override;
+	Value visitGet(Expr::Get&)           override;
+	Value visitSet(Expr::Set&)           override;
+	Value visitThis(Expr::ThisKw&)       override;
 
     void resolve(Expr::Base* expr, unsigned int distance);
 private:

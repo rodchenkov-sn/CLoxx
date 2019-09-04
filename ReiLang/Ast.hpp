@@ -7,8 +7,8 @@
 
 enum class AstNodeType
 {
-    Call, Grouping, Binary, Ternary, Unary, Literal, Variable, Assign,
-    Expression, Print, Var, Block, IfStmt, While, Controller, ForLoop, Function, Return, Klass
+    Call, Grouping, Binary, Ternary, Unary, Literal, Variable, Assign, ThisKw,
+    Expression, Print, Var, Block, IfStmt, While, Controller, ForLoop, Function, Return, Klass, Get, Set
 };
 
 namespace Expr { // Base class here
@@ -43,6 +43,50 @@ public:
 
 namespace Expr {
 
+class ThisKw : public Base
+{
+public:
+	explicit ThisKw(Token keyword);
+	Value accept(Visitor& visitor) override;
+
+	[[nodiscard]] Token keyword() const { return keyword_; }
+
+	[[nodiscard]] AstNodeType type() const override { return AstNodeType::ThisKw; }
+private:
+	Token keyword_;
+};
+	
+class Set : public Base
+{
+public:
+	Set(Expr::Base::Ptr object, Token name, Expr::Base::Ptr value);
+	Value accept(Visitor& visitor) override;
+
+	[[nodiscard]] Expr::Base::Ptr object() const { return object_; }
+	[[nodiscard]] Token           name()   const { return name_; }
+	[[nodiscard]] Expr::Base::Ptr value()  const { return value_; }
+
+	[[nodiscard]] AstNodeType type() const override { return AstNodeType::Set; }
+private:
+	Expr::Base::Ptr object_;
+	Token			name_;
+	Expr::Base::Ptr value_;
+};
+	
+class Get : public Base
+{
+public:
+	Get(Expr::Base::Ptr object, Token name);
+	Value accept(Visitor& visitor) override;
+
+	[[nodiscard]] Ptr   object() const { return object_; }
+	[[nodiscard]] Token name()   const { return name_;   }
+
+	[[nodiscard]] AstNodeType type() const override { return AstNodeType::Get; }
+private:
+	Expr::Base::Ptr object_;
+	Token           name_;
+};
 
 class Call : public Base
 {
@@ -197,12 +241,15 @@ public:
     virtual Value visitAssign  (Assign&)   = 0;
     virtual Value visitCall    (Call&)     = 0;
     virtual Value visitLambda  (Lambda*)   = 0;
+	virtual Value visitGet     (Get&)      = 0;
+	virtual Value visitSet     (Set&)      = 0;
+	virtual Value visitThis    (ThisKw&)   = 0;
 };
 
 }
 
 namespace Stmt {
-
+	
 class Expression : public Base
 {
 public:
@@ -214,21 +261,6 @@ public:
     [[nodiscard]] AstNodeType type() const override { return AstNodeType::Expression; }
 private:
     Expr::Base::Ptr expr_;
-};
-
-class Klass : public Base
-{
-public:
-    Klass(Token name, std::vector<Stmt::Base::Ptr> methods);
-    void accept(Visitor& visitor) override;
-
-    [[nodiscard]] Token                   name()    const { return name_;    }
-    [[nodiscard]] const std::vector<Ptr>& methods() const { return methods_; }
-
-    [[nodiscard]] AstNodeType type() const override { return AstNodeType::Klass; }
-private:
-    Token                        name_;
-    std::vector<Stmt::Base::Ptr> methods_;
 };
 
 class Print : public Base
@@ -356,6 +388,21 @@ private:
     Token name_;
     std::vector<Token> params_;
     std::list<Stmt::Base::Ptr> body_;
+};
+
+class Klass : public Base
+{
+public:
+	Klass(Token name, std::vector<std::shared_ptr<Stmt::Function>> methods);
+	void accept(Visitor& visitor) override;
+
+	[[nodiscard]] Token                                               name()    const { return name_;    }
+	[[nodiscard]] const std::vector<std::shared_ptr<Stmt::Function>>& methods() const { return methods_; }
+
+	[[nodiscard]] AstNodeType type() const override { return AstNodeType::Klass; }
+private:
+	Token                                         name_;
+	std::vector<std::shared_ptr<Stmt::Function>>  methods_;
 };
 
 class Return : public Base

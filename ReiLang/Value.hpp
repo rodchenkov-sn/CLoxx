@@ -36,8 +36,8 @@ public:
     explicit Value(bool value);
     explicit Value(double value);
     explicit Value(std::string value);
-    explicit Value(std::shared_ptr<Callable> value);
-    explicit Value(std::shared_ptr<Instance> value);
+    explicit Value(std::weak_ptr<Callable> value);
+    explicit Value(std::weak_ptr<Instance> value);
 
     Value operator -  ()                 const;
     Value operator !  ()                 const;
@@ -70,7 +70,7 @@ private:
         bool, 
         double, 
         std::string, 
-        std::shared_ptr<Callable>, 
-        std::shared_ptr<Instance>
+        std::weak_ptr<Callable>, 
+        std::weak_ptr<Instance>
     > value_;
 };

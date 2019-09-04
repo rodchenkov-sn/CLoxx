@@ -1,5 +1,6 @@
 #include "Interpreter.hpp"
 #include "StdLib/stdlib.hpp"
+#include "Instance.hpp"
 #include <iostream>
 #include <sstream>
 
@@ -130,7 +131,11 @@ void Interpreter::visitReturn(Stmt::Return& stmt)
 
 void Interpreter::visitKlass(Stmt::Klass& stmt)
 {
-    environment_->define(stmt.name().lexeme, Value{ std::make_shared<Klass>(stmt.name().lexeme) });
+	std::map<std::string, std::shared_ptr<Function>> methods;
+	for (auto& m : stmt.methods()) {
+		methods.insert({ m->name().lexeme, std::make_shared<Function>(m.get(), environment_) });
+	}
+	environment_->define(stmt.name().lexeme, Value{ std::make_shared<Klass>(stmt.name().lexeme, methods) });
 }
 
 Value Interpreter::visitCall(Expr::Call& expr)
@@ -259,6 +264,35 @@ Value Interpreter::visitLambda(Expr::Lambda* expr)
 {
     const std::shared_ptr<Callable> fun = std::make_shared<Function>(expr, environment_);
     return Value{ fun };
+}
+
+Value Interpreter::visitGet(Expr::Get& expr)
+{
+	auto obj = evaluate_(*expr.object());
+	if (obj.getType() == ValueType::Instance) {
+		try {
+			return obj.getInstance()->get(expr.name().lexeme);
+		} catch (const InstanceException& ie) {
+			throw RuntimeError{ expr.name().line, ie.what() };
+		}
+	}
+	throw RuntimeError{ expr.name().line, "Only instances have properties." };
+}
+
+Value Interpreter::visitSet(Expr::Set& expr)
+{
+	auto obj = evaluate_(*expr.object());
+	if (obj.getType() != ValueType::Instance) {
+		throw RuntimeError{ expr.name().line, "Only instances have fields." };
+	}
+	auto val = evaluate_(*expr.value());
+	obj.getInstance()->put(expr.name().lexeme, val);
+	return val;
+}
+
+Value Interpreter::visitThis(Expr::ThisKw& expr)
+{
+	return lookup_var_(&expr, expr.keyword());
 }
 
 void Interpreter::resolve(Expr::Base* expr, const unsigned distance)

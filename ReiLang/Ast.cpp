@@ -1,6 +1,17 @@
 #include "Ast.hpp"
 #include <utility>
 
+Expr::Get::Get(Expr::Base::Ptr object, Token name):
+	object_(std::move(object)),
+	name_(std::move(name))
+{
+}
+
+Value Expr::Get::accept(Visitor& visitor)
+{
+	return visitor.visitGet(*this);
+}
+
 Expr::Call::Call(Expr::Base::Ptr callee, Token paren, std::vector<Expr::Base::Ptr> arguments):
     callee_(std::move(callee)),
     paren_(std::move(paren)),
@@ -100,6 +111,28 @@ Value Expr::Lambda::accept(Visitor& visitor)
     return visitor.visitLambda(this);
 }
 
+Expr::ThisKw::ThisKw(Token keyword):
+	keyword_(std::move(keyword))
+{
+}
+
+Value Expr::ThisKw::accept(Visitor& visitor)
+{
+	return visitor.visitThis(*this);
+}
+
+Expr::Set::Set(Expr::Base::Ptr object, Token name, Expr::Base::Ptr value):
+	object_(std::move(object)),
+	name_(std::move(name)),
+	value_(std::move(value))
+{
+}
+
+Value Expr::Set::accept(Visitor& visitor)
+{
+	return visitor.visitSet(*this);
+}
+
 Stmt::Expression::Expression(Expr::Base::Ptr expr):
     expr_(std::move(expr))
 {
@@ -110,7 +143,7 @@ void Stmt::Expression::accept(Visitor& visitor)
     visitor.visitExpression(*this);
 }
 
-Stmt::Klass::Klass(Token name, std::vector<Stmt::Base::Ptr> methods):
+Stmt::Klass::Klass(Token name, std::vector<std::shared_ptr<Stmt::Function>> methods):
     name_(std::move(name)),
     methods_(std::move(methods))
 {

@@ -28,7 +28,7 @@ Environment::Environment(Environment* enclosing):
 void Environment::define(const std::string& name, const Value& value)
 {
     logger.log(LogLevel::Debug, "defining var " + name + " with val " + value.toString());
-    values_[name] = value;
+	values_[name] = value;
 }
 
 void Environment::assign(const std::string& name, const Value& value)

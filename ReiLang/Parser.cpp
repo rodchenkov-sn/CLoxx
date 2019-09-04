@@ -182,9 +182,9 @@ Stmt::Base::Ptr Parser::klass_declaration_()
 {
     auto name = consume_(TokenType::Identifier, "expect class name.");
     consume_v_(TokenType::LeftBrace, "expect '{' before class body.");
-    std::vector<Stmt::Base::Ptr> methods;
+	std::vector<std::shared_ptr<Stmt::Function>> methods;
     while (!check_(TokenType::RightBrace) && !is_end_()) {
-        methods.push_back(function_("method"));
+        methods.push_back(std::dynamic_pointer_cast<Stmt::Function>(function_("method")));
     }
     consume_v_(TokenType::RightBrace, "expect '}' after class body.");
     return std::make_shared<Stmt::Klass>(name, methods);
@@ -209,12 +209,16 @@ Expr::Base::Ptr Parser::assignment_()
 {
     const auto expr = ternary_();
     if (match_({TokenType::Equal})) {
-        const Token equals = previous_();
+        const auto equals = previous_();
         auto val = assignment_();
         if (expr->type() == AstNodeType::Variable) {
             Token name = dynamic_cast<Expr::Variable*>(expr.get())->name();
             return std::make_shared<Expr::Assign>(name, val);
         }
+    	if (expr->type() == AstNodeType::Get) {
+			auto get = dynamic_cast<Expr::Get*>(expr.get());
+			return std::make_shared<Expr::Set>(get->object(), get->name(), val);
+    	}
         throw error_(equals, "Invalid assignment target.");
     }
     return expr;
@@ -314,7 +318,10 @@ Expr::Base::Ptr Parser::call_()
     while (true) {
         if (match_({ TokenType::LeftParen })) {
             expr = finish_call_(expr);
-        } else {
+		} else if (match_({ TokenType::Dot })) {
+			auto name = consume_(TokenType::Identifier, "expect property name after '.'.");
+			expr = std::make_shared<Expr::Get>(expr, name);
+		} else {
             break;
         }
     }
@@ -346,6 +353,9 @@ Expr::Base::Ptr Parser::primary_()
     if (match_({ TokenType::Identifier })) {
         return std::make_shared<Expr::Variable>(previous_());
     }
+	if (match_({ TokenType::This })) {
+		return std::make_shared<Expr::ThisKw>(previous_());
+	}
     if (match_({ TokenType::Fun })) {
         return lambda_();
     }

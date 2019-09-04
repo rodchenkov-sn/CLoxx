@@ -80,6 +80,25 @@ Value Resolver::visitLambda(Expr::Lambda* expr)
     return {};
 }
 
+Value Resolver::visitGet(Expr::Get& expr)
+{
+	resolve_(expr.object());
+	return {};
+}
+
+Value Resolver::visitSet(Expr::Set& expr)
+{
+	resolve_(expr.value());
+	resolve_(expr.object());
+	return {};
+}
+
+Value Resolver::visitThis(Expr::ThisKw& expr)
+{
+	resolve_local_(&expr, expr.keyword());
+	return {};
+}
+
 void Resolver::visitExpression(Stmt::Expression& stmt)
 {
     resolve_(stmt.expr());
@@ -162,6 +181,12 @@ void Resolver::visitKlass(Stmt::Klass& stmt)
 {
     declare_(stmt.name());
     define_(stmt.name());
+	begin_scope_();
+	scopes_.back().insert({ "this", true });
+	for (auto& m : stmt.methods()) {
+		resolve_function_(m.get(), FunType::Method);
+	}
+	end_scope_();
 }
 
 void Resolver::resolve(const std::vector<Stmt::Base::Ptr>& statements)
