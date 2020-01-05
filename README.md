@@ -1,4 +1,2 @@
-# ReiLang-2.22
-This is (not) a Lox copy
-
+# CLoxx
 [Lox itself](https://craftinginterpreters.com)
